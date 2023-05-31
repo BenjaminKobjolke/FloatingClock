@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FloatingClock"
         mc:Ignorable="d"
-        Title="MainWindow" Height="88" Width="200" WindowStyle="None" Background="#FF252525" Opacity="0.90" ResizeMode="NoResize"
+        Title="Floating Clock" Height="88" Width="200" WindowStyle="None" Background="#FF252525" Opacity="0.70" ResizeMode="NoResize"
         Left="1700.0" Top="950.0"
         Topmost="True" AllowsTransparency="True" ShowInTaskbar="False" Icon="Resources/Images/clock.png">
   <Grid>

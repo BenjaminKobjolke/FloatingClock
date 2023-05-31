@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
@@ -39,21 +40,51 @@ namespace FloatingClock
             };
             timer.Tick += new System.EventHandler(Clock_Tick);
             timer.Start();
+
+
+            FloatingClockWindow.Unloaded += FloatingClockWindow_Unloaded;
+            SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
+
+        }
+
+        private void FloatingClockWindow_Unloaded(object sender, RoutedEventArgs e)
+        {
+            SystemEvents.DisplaySettingsChanged -= SystemEvents_DisplaySettingsChanged;
         }
 
         /// <summary>
         /// Use some Windows API to make the window disappear from Alt-Tab
         /// </summary>
-        /// Courtesy of https://stackoverflow.com/a/551847/10148350
+        /// Courtesy of https://sfckoverflow.com/a/551847/10148350
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void FloatingClockWindow_Loaded(object sender, RoutedEventArgs e)
         {
             WindowInteropHelper wndHelper = new WindowInteropHelper(this);
-
+            
             int exStyle = (int)GetWindowLong(wndHelper.Handle, (int)GetWindowLongFields.GWL_EXSTYLE);
             exStyle |= (int)ExtendedWindowStyles.WS_EX_TOOLWINDOW;
             SetWindowLong(wndHelper.Handle, (int)GetWindowLongFields.GWL_EXSTYLE, (IntPtr)exStyle);
+
+            // position window at the bottom right of the screen
+            //this.Left = SystemParameters.WorkArea.Width - this.Width;
+            //this.Top = SystemParameters.WorkArea.Height - this.Height;
+
+            //this.Left = SystemParameters.VirtualScreenWidth - this.Width;
+            //this.Top = SystemParameters.VirtualScreenHeight - this.Height;
+            AdjustWindowPosition();
+        }
+
+        private void SystemEvents_DisplaySettingsChanged(object sender, EventArgs e)
+        {
+            AdjustWindowPosition();
+        }
+
+        private void AdjustWindowPosition()
+        {
+            this.Left = SystemParameters.FullPrimaryScreenWidth - this.Width - 10;
+            this.Top = SystemParameters.FullPrimaryScreenHeight - this.Height + 20;
+           
         }
 
         /// <summary>
@@ -63,10 +94,11 @@ namespace FloatingClock
         /// <param name="e"></param>
         private void Clock_Tick(object sender, EventArgs e)
         {
+            AdjustWindowPosition();
             DateTime now = DateTime.Now;
 
             if (now.Month < 10)
-                DateBlock.Text = now.ToString(" M/dd/yyyy");
+                DateBlock.Text = now.ToString(" dd/M/yyyy");
             else
                 DateBlock.Text = now.ToString("MM/dd/yyyy");
 
