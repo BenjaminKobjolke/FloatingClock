@@ -6,18 +6,40 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FloatingClock"
         mc:Ignorable="d"
-        Title="Floating Clock" Height="88" Width="200" WindowStyle="None" Background="#FF252525" Opacity="0.70" ResizeMode="NoResize"
+        KeyDown="Window_KeyDown"
+        Title="Floating Clock" Height="88" Width="220" WindowStyle="None" Background="#FF252525" Opacity="0.70" ResizeMode="NoResize"
         Left="1700.0" Top="950.0"
         Topmost="True" AllowsTransparency="True" ShowInTaskbar="False" Icon="Resources/Images/clock.png">
   <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*"/>
+      <ColumnDefinition Width="Auto"/>
+    </Grid.ColumnDefinitions>
     <TextBlock x:Name="DateBlock" Foreground="#15fc11"
                FontSize="16" TextAlignment="Center"
                FontFamily="/FloatingClock;component/Resources/Fonts/#IBM Plex Mono"
                VerticalAlignment="Top"
                HorizontalAlignment="Center" Padding="0 5"/>
-    <TextBlock x:Name="ClockBlock" Foreground="#15fc11"
-               FontSize="60" TextAlignment="Center"
-               FontFamily="/FloatingClock;component/Resources/Fonts/#IBM Plex Mono" Height="75"
-               VerticalAlignment="Bottom"/>
+    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+      <TextBlock x:Name="ClockBlock"
+                 Text="10:30"
+                 VerticalAlignment="Bottom"
+                 Foreground="#15fc11"
+                 FontSize="55"
+                 FontFamily="/FloatingClock;component/Resources/Fonts/#IBM Plex Mono"/>
+      <TextBlock x:Name="ClockBlockSeconds"
+                 Text=":15"
+                 VerticalAlignment="Bottom"
+                 Foreground="#15fc11"
+                 FontSize="15"
+                 FontFamily="/FloatingClock;component/Resources/Fonts/#IBM Plex Mono">
+        <TextBlock.RenderTransform>
+          <TranslateTransform X="5" Y="-7"/>
+        </TextBlock.RenderTransform>        
+      </TextBlock>
+                 
+    </StackPanel>
+
+
   </Grid>
 </Window>

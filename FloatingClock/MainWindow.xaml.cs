@@ -47,6 +47,15 @@ namespace FloatingClock
 
         }
 
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.S)
+            {
+                ClockBlockSeconds.Visibility = (ClockBlockSeconds.Visibility == Visibility.Collapsed) ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }      
+
+
         private void FloatingClockWindow_Unloaded(object sender, RoutedEventArgs e)
         {
             SystemEvents.DisplaySettingsChanged -= SystemEvents_DisplaySettingsChanged;
@@ -97,15 +106,11 @@ namespace FloatingClock
             AdjustWindowPosition();
             DateTime now = DateTime.Now;
 
-            if (now.Month < 10)
-                DateBlock.Text = now.ToString(" dd/M/yyyy");
-            else
-                DateBlock.Text = now.ToString("MM/dd/yyyy");
+            DateBlock.Text = now.ToString("dd/MM/yyyy");
 
-            if (int.Parse(now.ToString("%h")) < 10)
-                ClockBlock.Text = now.ToString(" h:mm");
-            else
-                ClockBlock.Text = now.ToString("hh:mm");
+            ClockBlock.Text = now.ToString("HH:mm");
+
+            ClockBlockSeconds.Text = now.ToString("ss");
         }
 
         /// <summary>
