@@ -7,10 +7,10 @@
         xmlns:local="clr-namespace:FloatingClock"
         mc:Ignorable="d"
         KeyDown="Window_KeyDown"
-        Title="Floating Clock" Height="88" Width="220" WindowStyle="None" Background="#FF252525" Opacity="0.70" ResizeMode="NoResize"
+        Title="Floating Clock" Height="88" Width="220" WindowStyle="None" Background="#BF252525" ResizeMode="NoResize"
         Left="1700.0" Top="950.0"
         Topmost="True" AllowsTransparency="True" ShowInTaskbar="False" Icon="Resources/Images/clock.png">
-  <Grid>
+  <Grid >
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="*"/>
       <ColumnDefinition Width="Auto"/>
@@ -34,7 +34,7 @@
                  FontSize="15"
                  FontFamily="/FloatingClock;component/Resources/Fonts/#IBM Plex Mono">
         <TextBlock.RenderTransform>
-          <TranslateTransform X="5" Y="-7"/>
+          <TranslateTransform X="5" Y="-10"/>
         </TextBlock.RenderTransform>        
       </TextBlock>
                  
