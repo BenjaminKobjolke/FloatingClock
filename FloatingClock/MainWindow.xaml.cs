@@ -23,6 +23,8 @@ namespace FloatingClock
         /// </summary>
         private DispatcherTimer timer;
 
+        private bool fixedPosition = true;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -47,11 +49,59 @@ namespace FloatingClock
 
         }
 
+        private void Window_Activated(object sender, EventArgs e)
+        {
+            FocusBorder.BorderThickness = new Thickness(1); // Adjust the thickness to your preference
+        }
+
+        private void Window_Deactivated(object sender, EventArgs e)
+        {
+            FocusBorder.BorderThickness = new Thickness(0);
+        }
+
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
+            bool shiftDown = false;
+            int speed = 100;
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+            { 
+                shiftDown = true;
+                speed = 10;
+            }
             if (e.Key == Key.S)
             {
                 ClockBlockSeconds.Visibility = (ClockBlockSeconds.Visibility == Visibility.Collapsed) ? Visibility.Visible : Visibility.Collapsed;
+            }
+            else if (e.Key == Key.F)
+            {
+                if (fixedPosition)
+                {
+                    fixedPosition = false;
+                }
+                else
+                {
+                    fixedPosition = true;
+                }
+            }
+            else if (e.Key == Key.Left)
+            {
+                fixedPosition = false;
+                this.Left = this.Left - speed;
+            }
+            else if (e.Key == Key.Right)
+            {
+                fixedPosition = false;
+                this.Left = this.Left + speed;
+            }
+            else if (e.Key == Key.Up)
+            {
+                fixedPosition = false;
+                this.Top = this.Top - speed;
+            }
+            else if (e.Key == Key.Down)
+            {
+                fixedPosition = false;
+                this.Top = this.Top + speed;
             }
         }      
 
@@ -91,6 +141,10 @@ namespace FloatingClock
 
         private void AdjustWindowPosition()
         {
+            if(!fixedPosition)
+            {
+                return;
+            }
             this.Left = SystemParameters.FullPrimaryScreenWidth - this.Width - 10;
             this.Top = SystemParameters.FullPrimaryScreenHeight - this.Height + 20;
            

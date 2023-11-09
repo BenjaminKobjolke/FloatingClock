@@ -9,37 +9,41 @@
         KeyDown="Window_KeyDown"
         Title="Floating Clock" Height="88" Width="220" WindowStyle="None" Background="#25000000" ResizeMode="NoResize"
         Left="1700.0" Top="950.0"
-        Topmost="True" AllowsTransparency="True" ShowInTaskbar="False" Icon="Resources/Images/clock.png">
-  <Grid >
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="*"/>
-      <ColumnDefinition Width="Auto"/>
-    </Grid.ColumnDefinitions>
-    <TextBlock x:Name="DateBlock" Foreground="#15fc11"
-               FontSize="16" TextAlignment="Center"
-               FontFamily="/FloatingClock;component/Resources/Fonts/#IBM Plex Mono"
-               VerticalAlignment="Top"
-               HorizontalAlignment="Center" Padding="0 5"/>
-    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
-      <TextBlock x:Name="ClockBlock"
-                 Text="10:30"
-                 VerticalAlignment="Bottom"
-                 Foreground="#15fc11"
-                 FontSize="55"
-                 FontFamily="/FloatingClock;component/Resources/Fonts/#IBM Plex Mono"/>
-      <TextBlock x:Name="ClockBlockSeconds"
-                 Text=":15"
-                 VerticalAlignment="Bottom"
-                 Foreground="#15fc11"
-                 FontSize="15"
-                 FontFamily="/FloatingClock;component/Resources/Fonts/#IBM Plex Mono">
-        <TextBlock.RenderTransform>
-          <TranslateTransform X="5" Y="-10"/>
-        </TextBlock.RenderTransform>        
-      </TextBlock>
+        Topmost="True" AllowsTransparency="True" ShowInTaskbar="False" Icon="Resources/Images/clock.png"
+        Activated="Window_Activated"
+        Deactivated="Window_Deactivated">
+   <Border x:Name="FocusBorder" BorderBrush="SkyBlue" BorderThickness="0">
+     <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="Auto"/>
+      </Grid.ColumnDefinitions>
+      <TextBlock x:Name="DateBlock" Foreground="#15fc11"
+                 FontSize="16" TextAlignment="Center"
+                 FontFamily="Serif LED Board-7"
+                 VerticalAlignment="Top"
+                 HorizontalAlignment="Center" Padding="0 5"/>
+      <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+        <TextBlock x:Name="ClockBlock"
+                   Text="10:30"
+                   VerticalAlignment="Bottom"
+                   Foreground="#15fc11"
+                   FontSize="42"
+                   FontFamily="Serif LED Board-7"/>
+        <TextBlock x:Name="ClockBlockSeconds"
+                   Text=":15"
+                   VerticalAlignment="Bottom"
+                   Foreground="#15fc11"
+                   FontSize="15"
+                   FontFamily="Serif LED Board-7">
+          <TextBlock.RenderTransform>
+            <TranslateTransform X="5" Y="-7"/>
+          </TextBlock.RenderTransform>        
+        </TextBlock>
                  
-    </StackPanel>
+      </StackPanel>
 
 
-  </Grid>
+    </Grid>
+  </Border>
 </Window>

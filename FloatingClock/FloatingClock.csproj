@@ -93,6 +93,7 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <Resource Include="Resources\Fonts\serif_led_board-7.ttf" />
     <Resource Include="Resources\Fonts\IBMPlexMono-Regular.ttf" />
   </ItemGroup>
   <ItemGroup>
