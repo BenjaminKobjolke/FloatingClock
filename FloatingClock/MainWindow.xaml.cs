@@ -1,9 +1,12 @@
-﻿using Microsoft.Win32;
+﻿using IniParser;
+using IniParser.Model;
+using Microsoft.Win32;
 using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace FloatingClock
@@ -24,6 +27,8 @@ namespace FloatingClock
         private DispatcherTimer timer;
 
         private bool fixedPosition = true;
+
+        private IniData iniData;
 
         public MainWindow()
         {
@@ -46,7 +51,99 @@ namespace FloatingClock
 
             FloatingClockWindow.Unloaded += FloatingClockWindow_Unloaded;
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
+        }
 
+        private void LoadSettings()
+        {
+            string iniPath = "settings.ini";
+            var parser = new FileIniDataParser();
+            iniData = parser.ReadFile(iniPath);
+
+            string fontFamilyName = iniData["font"]["family"];
+            if (!string.IsNullOrEmpty(fontFamilyName))
+            {
+                System.Windows.Media.FontFamily customFont = new System.Windows.Media.FontFamily(fontFamilyName);
+                DateBlock.FontFamily = customFont;
+                int sizeDate = Convert.ToInt32(iniData["date"]["size"]);
+                DateBlock.FontSize = sizeDate;
+
+                ClockBlock.FontFamily = customFont;
+                int sizeTime = Convert.ToInt32(iniData["time"]["size"]);
+                ClockBlock.FontSize = sizeTime;
+
+                ClockBlockSeconds.FontFamily = customFont;
+                int sizeSeconds = Convert.ToInt32(iniData["seconds"]["size"]);
+                ClockBlockSeconds.FontSize = sizeSeconds;
+
+
+            }
+
+            fixedPosition = Convert.ToBoolean(Convert.ToInt32(iniData["window"]["fixed"]));
+            if(!fixedPosition)
+            {
+                int xWindow = Convert.ToInt32(iniData["window"]["x"]);
+                int yWindow = Convert.ToInt32(iniData["window"]["y"]);
+                this.Left = xWindow;
+                this.Top = SystemParameters.FullPrimaryScreenHeight - yWindow;
+            }
+
+            int widthWindow = Convert.ToInt32(iniData["window"]["width"]);
+            int heightWindow = Convert.ToInt32(iniData["window"]["height"]);
+
+            this.Width = widthWindow;
+            this.Height = heightWindow;
+
+            bool showSeconds = Convert.ToBoolean(Convert.ToInt32(iniData["seconds"]["show"]));
+            if (showSeconds)
+            {
+                ClockBlockSeconds.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                ClockBlockSeconds.Visibility = Visibility.Collapsed;
+            }
+
+            int xSeconds = Convert.ToInt32(iniData["seconds"]["x"]);
+            int ySeconds = Convert.ToInt32(iniData["seconds"]["y"]);
+            var transformSeconds = ClockBlockSeconds.RenderTransform as TranslateTransform;
+            if (transformSeconds != null)
+            {
+                transformSeconds.X = xSeconds;
+                transformSeconds.Y = ySeconds;
+            }
+
+            int xTime = Convert.ToInt32(iniData["time"]["x"]);
+            int yTime = Convert.ToInt32(iniData["time"]["y"]);
+            var transformTime = ClockBlock.RenderTransform as TranslateTransform;
+            if (transformTime != null)
+            {
+                transformTime.X = xTime;
+                transformTime.Y = yTime;
+            }
+
+            int xDate = Convert.ToInt32(iniData["date"]["x"]);
+            int yDate = Convert.ToInt32(iniData["date"]["y"]);
+            var transformDate = DateBlock.RenderTransform as TranslateTransform;
+            if (transformDate != null)
+            {
+                transformDate.X = xDate;
+                transformDate.Y = yDate;
+            }
+
+            bool showDate = Convert.ToBoolean(Convert.ToInt32(iniData["date"]["show"]));
+            if (showDate)
+            {
+                DateBlock.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                DateBlock.Visibility = Visibility.Collapsed;
+            }
+
+
+            string backgroundColorValue = iniData["background"]["color"];
+            Color backgroundColor = (Color)ColorConverter.ConvertFromString(backgroundColorValue);
+            FloatingClockWindow.Background = new SolidColorBrush(backgroundColor);
         }
 
         private void Window_Activated(object sender, EventArgs e)
@@ -124,6 +221,7 @@ namespace FloatingClock
             int exStyle = (int)GetWindowLong(wndHelper.Handle, (int)GetWindowLongFields.GWL_EXSTYLE);
             exStyle |= (int)ExtendedWindowStyles.WS_EX_TOOLWINDOW;
             SetWindowLong(wndHelper.Handle, (int)GetWindowLongFields.GWL_EXSTYLE, (IntPtr)exStyle);
+            LoadSettings();
 
             // position window at the bottom right of the screen
             //this.Left = SystemParameters.WorkArea.Width - this.Width;
@@ -158,8 +256,7 @@ namespace FloatingClock
         private void Clock_Tick(object sender, EventArgs e)
         {
             AdjustWindowPosition();
-            DateTime now = DateTime.Now;
-
+            DateTime now = DateTime.Now;            
             DateBlock.Text = now.ToString("dd/MM/yyyy");
 
             ClockBlock.Text = now.ToString("HH:mm");
