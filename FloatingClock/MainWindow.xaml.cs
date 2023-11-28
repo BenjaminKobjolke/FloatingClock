@@ -134,6 +134,18 @@ namespace FloatingClock
             Color timeColor = (Color)ColorConverter.ConvertFromString(timeColorValue);
             ClockBlock.Foreground = new SolidColorBrush(timeColor);
 
+            string timeVerticalAlignmentString = iniData["time"]["vertical_alignment"];
+            string timeHorizontalAlignmentString = iniData["time"]["horizontal_alignment"];
+            if (Enum.TryParse(timeVerticalAlignmentString, out VerticalAlignment timeVerticalAlignmentValue))
+            {
+                ClockBlock.VerticalAlignment = timeVerticalAlignmentValue;
+            }
+            if (Enum.TryParse(timeHorizontalAlignmentString, out HorizontalAlignment timeHorizontalAlignmentValue))
+            {
+                ClockBlock.HorizontalAlignment = timeHorizontalAlignmentValue;
+            }
+
+
             int xDate = Convert.ToInt32(iniData["date"]["x"]);
             int yDate = Convert.ToInt32(iniData["date"]["y"]);
             var transformDate = DateBlock.RenderTransform as TranslateTransform;
@@ -159,9 +171,31 @@ namespace FloatingClock
             Color dateColor = (Color)ColorConverter.ConvertFromString(dateColorValue);
             DateBlock.Foreground = new SolidColorBrush(dateColor);
 
+            string dateVerticalAlignmentString = iniData["date"]["vertical_alignment"];
+            string  dateHorizontalAlignmentString = iniData["date"]["horizontal_alignment"];
+            if (Enum.TryParse(dateVerticalAlignmentString, out VerticalAlignment dateVerticalAlignmentValue))
+            {
+                DateBlock.VerticalAlignment = dateVerticalAlignmentValue;
+            }
+            if (Enum.TryParse(dateHorizontalAlignmentString, out HorizontalAlignment dateHorizontalAlignmentValue))
+            {
+                DateBlock.HorizontalAlignment = dateHorizontalAlignmentValue;
+            }
+
             string backgroundColorValue = iniData["background"]["color"];
             Color backgroundColor = (Color)ColorConverter.ConvertFromString(backgroundColorValue);
             FloatingClockWindow.Background = new SolidColorBrush(backgroundColor);
+
+            string panelVerticalAlignmentString = iniData["stackpanel"]["vertical_alignment"];
+            string panelHorizontalAlignmentString = iniData["stackpanel"]["horizontal_alignment"];
+            if (Enum.TryParse(panelVerticalAlignmentString, out VerticalAlignment panelVerticalAlignmentValue))
+            {
+                StackPanelBlock.VerticalAlignment = panelVerticalAlignmentValue;
+            }
+            if (Enum.TryParse(panelHorizontalAlignmentString, out HorizontalAlignment panelHorizontalAlignmentValue))
+            {
+                StackPanelBlock.HorizontalAlignment = panelHorizontalAlignmentValue;
+            }
         }
 
         private void Window_Activated(object sender, EventArgs e)

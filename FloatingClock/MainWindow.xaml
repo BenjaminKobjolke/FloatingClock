@@ -22,15 +22,17 @@
                  FontSize="16" TextAlignment="Center"
                  FontFamily="/FloatingClock;component/Resources/Fonts/#IBM Plex Mono"
                  VerticalAlignment="Top"
-                 HorizontalAlignment="Center" Padding="0 5">
+                 HorizontalAlignment="Center" 
+                 Padding="0 5">
           <TextBlock.RenderTransform>
             <TranslateTransform X="0" Y="0"/>
           </TextBlock.RenderTransform>
       </TextBlock>
-      <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+      <StackPanel x:Name="StackPanelBlock" Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center">
         <TextBlock x:Name="ClockBlock"
                    Text="00:00"
                    VerticalAlignment="Bottom"
+                   HorizontalAlignment="Center"
                    Foreground="#15fc11"
                    FontSize="42"
                    FontFamily="/FloatingClock;component/Resources/Fonts/#IBM Plex Mono">
@@ -41,6 +43,7 @@
         <TextBlock x:Name="ClockBlockSeconds"
                    Text="00"
                    VerticalAlignment="Bottom"
+                   HorizontalAlignment="Center"
                    Foreground="#15fc11"
                    FontSize="15"
                    FontFamily="/FloatingClock;component/Resources/Fonts/#IBM Plex Mono">
