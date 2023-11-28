@@ -30,6 +30,9 @@ namespace FloatingClock
 
         private IniData iniData;
 
+        private string dateFormat = "dd/MM/yyyy";
+        private string timeFormat = "HH:mm";
+
         public MainWindow()
         {
             InitializeComponent();
@@ -121,6 +124,8 @@ namespace FloatingClock
                 transformTime.Y = yTime;
             }
 
+            timeFormat = iniData["time"]["format"];
+
             int xDate = Convert.ToInt32(iniData["date"]["x"]);
             int yDate = Convert.ToInt32(iniData["date"]["y"]);
             var transformDate = DateBlock.RenderTransform as TranslateTransform;
@@ -140,6 +145,7 @@ namespace FloatingClock
                 DateBlock.Visibility = Visibility.Collapsed;
             }
 
+            dateFormat = iniData["date"]["format"];
 
             string backgroundColorValue = iniData["background"]["color"];
             Color backgroundColor = (Color)ColorConverter.ConvertFromString(backgroundColorValue);
@@ -257,9 +263,9 @@ namespace FloatingClock
         {
             AdjustWindowPosition();
             DateTime now = DateTime.Now;            
-            DateBlock.Text = now.ToString("dd/MM/yyyy");
+            DateBlock.Text = now.ToString(dateFormat);
 
-            ClockBlock.Text = now.ToString("HH:mm");
+            ClockBlock.Text = now.ToString(timeFormat);
 
             ClockBlockSeconds.Text = now.ToString("ss");
         }
