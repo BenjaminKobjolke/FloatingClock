@@ -115,6 +115,10 @@ namespace FloatingClock
                 transformSeconds.Y = ySeconds;
             }
 
+            string secondsColorValue = iniData["seconds"]["color"];
+            Color secondsColor = (Color)ColorConverter.ConvertFromString(secondsColorValue);
+            ClockBlockSeconds.Foreground = new SolidColorBrush(secondsColor);
+
             int xTime = Convert.ToInt32(iniData["time"]["x"]);
             int yTime = Convert.ToInt32(iniData["time"]["y"]);
             var transformTime = ClockBlock.RenderTransform as TranslateTransform;
@@ -125,6 +129,10 @@ namespace FloatingClock
             }
 
             timeFormat = iniData["time"]["format"];
+
+            string timeColorValue = iniData["time"]["color"];
+            Color timeColor = (Color)ColorConverter.ConvertFromString(timeColorValue);
+            ClockBlock.Foreground = new SolidColorBrush(timeColor);
 
             int xDate = Convert.ToInt32(iniData["date"]["x"]);
             int yDate = Convert.ToInt32(iniData["date"]["y"]);
@@ -146,6 +154,10 @@ namespace FloatingClock
             }
 
             dateFormat = iniData["date"]["format"];
+
+            string dateColorValue = iniData["date"]["color"];
+            Color dateColor = (Color)ColorConverter.ConvertFromString(dateColorValue);
+            DateBlock.Foreground = new SolidColorBrush(dateColor);
 
             string backgroundColorValue = iniData["background"]["color"];
             Color backgroundColor = (Color)ColorConverter.ConvertFromString(backgroundColorValue);
