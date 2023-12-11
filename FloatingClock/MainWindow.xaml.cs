@@ -2,6 +2,8 @@
 using IniParser.Model;
 using Microsoft.Win32;
 using System;
+using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
@@ -25,6 +27,8 @@ namespace FloatingClock
         /// For setting the time/date text
         /// </summary>
         private DispatcherTimer timer;
+
+        private DispatcherTimer timerBackground;
 
         private bool fixedPosition = true;
 
@@ -50,7 +54,6 @@ namespace FloatingClock
             };
             timer.Tick += new System.EventHandler(Clock_Tick);
             timer.Start();
-
 
             FloatingClockWindow.Unloaded += FloatingClockWindow_Unloaded;
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
@@ -196,6 +199,53 @@ namespace FloatingClock
             {
                 StackPanelBlock.HorizontalAlignment = panelHorizontalAlignmentValue;
             }
+
+            bool updateBackgroundAlpha = Convert.ToBoolean(Convert.ToInt32(iniData["background"]["auto_brightness_adjustment"]));
+            if (updateBackgroundAlpha)
+            {
+                double changeThreshold = ConvertToDoubleWithCultureFallback(iniData["background"]["threshold_change"]);
+                ScreenCaptureHelper.BrightnessChangeThreshold = changeThreshold;
+
+                double minThreshold = ConvertToDoubleWithCultureFallback(iniData["background"]["threshold_min"]);                
+                ScreenCaptureHelper.MinBrightnessThreshold = minThreshold;
+
+                double maxThreshold = ConvertToDoubleWithCultureFallback(iniData["background"]["threshold_max"]);
+                ScreenCaptureHelper.MaxBrightnessThreshold = maxThreshold;
+
+                double damping = ConvertToDoubleWithCultureFallback(iniData["background"]["damping"]);
+                ScreenCaptureHelper.DampingFactor = damping;
+
+                double maxAlpha = ConvertToDoubleWithCultureFallback(iniData["background"]["alpha_max"]);
+                ScreenCaptureHelper.AlphaMax = maxAlpha;
+
+                double minAlpha = ConvertToDoubleWithCultureFallback(iniData["background"]["alpha_min"]);
+                ScreenCaptureHelper.AlphaMin = minAlpha;
+
+                timerBackground = new DispatcherTimer
+                {
+                    Interval = System.TimeSpan.FromMilliseconds(100)
+                };
+                timerBackground.Tick += new System.EventHandler(Background_Tick);
+                timerBackground.Start();
+            }
+        }
+
+        private static double ConvertToDoubleWithCultureFallback(string stringValue)
+        {
+            // Try parsing with invariant culture (dot as decimal separator)
+            if (double.TryParse(stringValue, NumberStyles.Any, CultureInfo.InvariantCulture, out double result))
+            {
+                return result;
+            }
+
+            // Try parsing with a culture that uses comma as decimal separator, e.g., French
+            if (double.TryParse(stringValue, NumberStyles.Any, new CultureInfo("fr-FR"), out result))
+            {
+                return result;
+            }
+
+            // Handle the case where neither parsing is successful
+            throw new FormatException("String is not a valid double format.");
         }
 
         private void Window_Activated(object sender, EventArgs e)
@@ -314,6 +364,14 @@ namespace FloatingClock
             ClockBlock.Text = now.ToString(timeFormat);
 
             ClockBlockSeconds.Text = now.ToString("ss");
+        }
+
+        private void Background_Tick(object sender, EventArgs e)
+        {            
+            string backgroundColorValue = iniData["background"]["color"];
+            Color backgroundColor = (Color)ColorConverter.ConvertFromString(backgroundColorValue);
+
+            ScreenCaptureHelper.AdjustBackgroundTransparency(this, backgroundColor);
         }
 
         /// <summary>
