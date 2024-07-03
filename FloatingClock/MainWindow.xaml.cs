@@ -50,7 +50,7 @@ namespace FloatingClock
             // instantiate and initialize the clock timer
             timer = new DispatcherTimer
             {
-                Interval = System.TimeSpan.FromMilliseconds(1000)
+                Interval = System.TimeSpan.FromMilliseconds(100)
             };
             timer.Tick += new System.EventHandler(Clock_Tick);
             timer.Start();
@@ -320,9 +320,9 @@ namespace FloatingClock
         {
             WindowInteropHelper wndHelper = new WindowInteropHelper(this);
             
-            int exStyle = (int)GetWindowLong(wndHelper.Handle, (int)GetWindowLongFields.GWL_EXSTYLE);
-            exStyle |= (int)ExtendedWindowStyles.WS_EX_TOOLWINDOW;
-            SetWindowLong(wndHelper.Handle, (int)GetWindowLongFields.GWL_EXSTYLE, (IntPtr)exStyle);
+            //int exStyle = (int)GetWindowLong(wndHelper.Handle, (int)GetWindowLongFields.GWL_EXSTYLE);
+            //exStyle |= (int)ExtendedWindowStyles.WS_EX_TOOLWINDOW;
+            //SetWindowLong(wndHelper.Handle, (int)GetWindowLongFields.GWL_EXSTYLE, (IntPtr)exStyle);
             LoadSettings();
 
             // position window at the bottom right of the screen
@@ -371,7 +371,7 @@ namespace FloatingClock
             string backgroundColorValue = iniData["background"]["color"];
             Color backgroundColor = (Color)ColorConverter.ConvertFromString(backgroundColorValue);
 
-            ScreenCaptureHelper.AdjustBackgroundTransparency(this, backgroundColor);
+            bool success = ScreenCaptureHelper.AdjustBackgroundTransparency(this, backgroundColor);
         }
 
         /// <summary>

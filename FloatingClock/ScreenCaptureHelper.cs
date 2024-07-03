@@ -24,10 +24,14 @@ namespace FloatingClock
 
         public static double DampingFactor { get; set; } = 0.1; // Default value
 
-        public static void AdjustBackgroundTransparency(Window window, Color backgroundColor)
+        public static bool AdjustBackgroundTransparency(Window window, Color backgroundColor)
         {
             using (Bitmap bmp = CaptureScreenArea(window)) // Updated call
             {
+                if(bmp == null)
+                {
+                    return false;
+                }
                 double averageBrightness = CalculateAverageBrightness(bmp);
                 byte alpha = CalculateAlpha(averageBrightness);
 
@@ -37,6 +41,8 @@ namespace FloatingClock
                     window.Background = new SolidColorBrush(backgroundColor);
                 });
             }
+
+            return true;
         }
 
 
@@ -44,19 +50,29 @@ namespace FloatingClock
         public static byte CalculateAlpha(double brightness)
         {
             double targetAlpha;
+            double alphaMin = (255 * AlphaMin);
+            double alphaMax = 255 * AlphaMax;
 
             if (brightness < MinBrightnessThreshold)
             {
-                targetAlpha = 0 + (255 * AlphaMin); // Maximum alpha for 100% transparency
+                targetAlpha = 0 + alphaMin; // Maximum alpha for 100% transparency
             }
             else if (brightness > MaxBrightnessThreshold)
             {
-                targetAlpha = 255 * AlphaMax;
+                targetAlpha = alphaMax;
             }
             else
             {
                 targetAlpha = 255 * brightness;
+                if (targetAlpha < alphaMin)
+                {
+                    targetAlpha = alphaMin;
+                } else if (targetAlpha > alphaMax)
+                {
+                    targetAlpha = alphaMax;
+                }
             }
+
 
             if (Math.Abs(targetAlpha - _lastAlpha) >= BrightnessChangeThreshold)
             {
@@ -80,12 +96,22 @@ namespace FloatingClock
             width = Math.Min(width, screenBounds.Width - x);
             height = Math.Min(height, screenBounds.Height - y);
 
-            Bitmap bmp = new Bitmap(width, height);
-            using (Graphics g = Graphics.FromImage(bmp))
+            try
             {
-                g.CopyFromScreen(x, y, 0, 0, new System.Drawing.Size(width, height));
+                Bitmap bmp = new Bitmap(width, height);
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    g.CopyFromScreen(x, y, 0, 0, new System.Drawing.Size(width, height));
+                }
+                return bmp;
             }
-            return bmp;
+            catch (Exception ex)
+            {
+                // Handle the exception
+                // You can log the error, display a message, etc.
+                Trace.WriteLine("Error capturing screen area: " + ex.Message);
+                return null; // Or handle differently as per your requirement
+            }        
         }
 
         private static double CalculateAverageBrightness(Bitmap bmp)

@@ -25,3 +25,7 @@ There are no current plans to expand the feature set of this program as it does 
 Use Visual Studio NuGet Package Manager to install the following packages:
 
 - Install-Package ini-parser
+
+# Suggested font
+
+https://www.1001fonts.com/serif-led-board-7-font.html
