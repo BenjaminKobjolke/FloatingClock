@@ -19,6 +19,17 @@ namespace FloatingClock
     public partial class MainWindow : Window
     {
         /// <summary>
+        /// Screen corner positions for docking
+        /// </summary>
+        public enum Corner
+        {
+            TopLeft = 1,
+            TopRight = 2,
+            BottomLeft = 3,
+            BottomRight = 4
+        }
+
+        /// <summary>
         /// Mouse position relative to window, set on LeftMouseDown
         /// </summary>
         private Point relativeMousePosition;
@@ -32,10 +43,17 @@ namespace FloatingClock
 
         private bool fixedPosition = true;
 
+        private Corner currentCorner = Corner.BottomRight;
+
         private IniData iniData;
 
         private string dateFormat = "dd/MM/yyyy";
         private string timeFormat = "HH:mm";
+
+        private bool debugMode = false;
+
+        private Rect previousWorkArea;
+        private TaskbarInfo.TaskbarPosition previousTaskbarPosition;
 
         public MainWindow()
         {
@@ -56,6 +74,7 @@ namespace FloatingClock
             timer.Start();
 
             FloatingClockWindow.Unloaded += FloatingClockWindow_Unloaded;
+            FloatingClockWindow.Closing += FloatingClockWindow_Closing;
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
         }
 
@@ -85,19 +104,39 @@ namespace FloatingClock
             }
 
             fixedPosition = Convert.ToBoolean(Convert.ToInt32(iniData["window"]["fixed"]));
+            debugMode = Convert.ToBoolean(Convert.ToInt32(iniData["window"]["debug"]));
+
+            // Load saved corner preference (default to BottomRight if not specified)
+            string cornerValue = iniData["window"]["fixed_corner"];
+            if (!string.IsNullOrEmpty(cornerValue) && int.TryParse(cornerValue, out int cornerInt))
+            {
+                if (cornerInt >= 1 && cornerInt <= 4)
+                {
+                    currentCorner = (Corner)cornerInt;
+                }
+            }
+
+            // Set window size first (needed for position validation)
+            int widthWindow = Convert.ToInt32(iniData["window"]["width"]);
+            int heightWindow = Convert.ToInt32(iniData["window"]["height"]);
+            this.Width = widthWindow;
+            this.Height = heightWindow;
+
+            // Handle non-fixed position with validation
             if(!fixedPosition)
             {
                 int xWindow = Convert.ToInt32(iniData["window"]["x"]);
                 int yWindow = Convert.ToInt32(iniData["window"]["y"]);
-                this.Left = xWindow;
-                this.Top = SystemParameters.FullPrimaryScreenHeight - yWindow;
+
+                double desiredLeft = xWindow;
+                double desiredTop = SystemParameters.FullPrimaryScreenHeight - yWindow;
+
+                // Validate and adjust position to ensure it's within screen bounds
+                ValidateAndAdjustPosition(ref desiredLeft, ref desiredTop, this.Width, this.Height);
+
+                this.Left = desiredLeft;
+                this.Top = desiredTop;
             }
-
-            int widthWindow = Convert.ToInt32(iniData["window"]["width"]);
-            int heightWindow = Convert.ToInt32(iniData["window"]["height"]);
-
-            this.Width = widthWindow;
-            this.Height = heightWindow;
 
             bool showSeconds = Convert.ToBoolean(Convert.ToInt32(iniData["seconds"]["show"]));
             if (showSeconds)
@@ -248,6 +287,75 @@ namespace FloatingClock
             throw new FormatException("String is not a valid double format.");
         }
 
+        private void SaveCornerToSettings()
+        {
+            try
+            {
+                iniData["window"]["fixed_corner"] = ((int)currentCorner).ToString();
+                iniData["window"]["fixed"] = fixedPosition ? "1" : "0";
+                var parser = new FileIniDataParser();
+                parser.WriteFile("settings.ini", iniData);
+            }
+            catch (Exception ex)
+            {
+                // Silently fail to avoid disrupting user experience
+                Debug.WriteLine($"Failed to save corner setting: {ex.Message}");
+            }
+        }
+
+        private void SaveWindowState()
+        {
+            try
+            {
+                // Save current window position (convert WPF coordinates to INI format)
+                int xWindow = (int)this.Left;
+                int yWindow = (int)(SystemParameters.FullPrimaryScreenHeight - this.Top);
+
+                iniData["window"]["x"] = xWindow.ToString();
+                iniData["window"]["y"] = yWindow.ToString();
+                iniData["window"]["fixed"] = fixedPosition ? "1" : "0";
+                iniData["window"]["fixed_corner"] = ((int)currentCorner).ToString();
+
+                var parser = new FileIniDataParser();
+                parser.WriteFile("settings.ini", iniData);
+            }
+            catch (Exception ex)
+            {
+                // Silently fail to avoid disrupting user experience
+                Debug.WriteLine($"Failed to save window state: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Validates and adjusts window position to ensure it stays within the work area
+        /// Useful when screen resolution changes between sessions
+        /// </summary>
+        private void ValidateAndAdjustPosition(ref double left, ref double top, double windowWidth, double windowHeight)
+        {
+            // Get current screen bounds (WorkArea respects taskbar)
+            double workAreaLeft = SystemParameters.WorkArea.Left;
+            double workAreaTop = SystemParameters.WorkArea.Top;
+            double workAreaWidth = SystemParameters.WorkArea.Width;
+            double workAreaHeight = SystemParameters.WorkArea.Height;
+
+            // Ensure window stays within work area
+            // Left edge: clamp to work area left
+            if (left < workAreaLeft)
+                left = workAreaLeft;
+
+            // Right edge: ensure window doesn't go off right side
+            if (left + windowWidth > workAreaLeft + workAreaWidth)
+                left = workAreaLeft + workAreaWidth - windowWidth;
+
+            // Top edge: clamp to work area top
+            if (top < workAreaTop)
+                top = workAreaTop;
+
+            // Bottom edge: ensure window doesn't go off bottom
+            if (top + windowHeight > workAreaTop + workAreaHeight)
+                top = workAreaTop + workAreaHeight - windowHeight;
+        }
+
         private void Window_Activated(object sender, EventArgs e)
         {
             FocusBorder.BorderThickness = new Thickness(1); // Adjust the thickness to your preference
@@ -263,7 +371,7 @@ namespace FloatingClock
             bool shiftDown = false;
             int speed = 100;
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
-            { 
+            {
                 shiftDown = true;
                 speed = 10;
             }
@@ -281,6 +389,42 @@ namespace FloatingClock
                 {
                     fixedPosition = true;
                 }
+            }
+            else if (e.Key == Key.D1 || e.Key == Key.NumPad1)
+            {
+                currentCorner = Corner.TopLeft;
+                fixedPosition = true;
+                DockToCorner(currentCorner);
+                SaveCornerToSettings();
+            }
+            else if (e.Key == Key.D2 || e.Key == Key.NumPad2)
+            {
+                currentCorner = Corner.TopRight;
+                fixedPosition = true;
+                DockToCorner(currentCorner);
+                SaveCornerToSettings();
+            }
+            else if (e.Key == Key.D3 || e.Key == Key.NumPad3)
+            {
+                currentCorner = Corner.BottomLeft;
+                fixedPosition = true;
+                DockToCorner(currentCorner);
+                SaveCornerToSettings();
+            }
+            else if (e.Key == Key.D4 || e.Key == Key.NumPad4)
+            {
+                currentCorner = Corner.BottomRight;
+                fixedPosition = true;
+                DockToCorner(currentCorner);
+                SaveCornerToSettings();
+            }
+            else if (e.Key == Key.N)
+            {
+                // Cycle to next corner: 1->2->3->4->1
+                currentCorner = (Corner)(((int)currentCorner % 4) + 1);
+                fixedPosition = true;
+                DockToCorner(currentCorner);
+                SaveCornerToSettings();
             }
             else if (e.Key == Key.Left)
             {
@@ -310,6 +454,12 @@ namespace FloatingClock
             SystemEvents.DisplaySettingsChanged -= SystemEvents_DisplaySettingsChanged;
         }
 
+        private void FloatingClockWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // Save current window state (position and fixed flag) when closing
+            SaveWindowState();
+        }
+
         /// <summary>
         /// Use some Windows API to make the window disappear from Alt-Tab
         /// </summary>
@@ -331,6 +481,10 @@ namespace FloatingClock
 
             //this.Left = SystemParameters.VirtualScreenWidth - this.Width;
             //this.Top = SystemParameters.VirtualScreenHeight - this.Height;
+
+            // Initialize WorkArea and taskbar tracking for change detection
+            previousWorkArea = SystemParameters.WorkArea;
+            previousTaskbarPosition = TaskbarInfo.GetTaskbarPosition();
             AdjustWindowPosition();
         }
 
@@ -345,9 +499,76 @@ namespace FloatingClock
             {
                 return;
             }
-            this.Left = SystemParameters.FullPrimaryScreenWidth - this.Width - 10;
-            this.Top = SystemParameters.FullPrimaryScreenHeight - this.Height + 20;
-           
+            DockToCorner(currentCorner);
+        }
+
+        /// <summary>
+        /// Docks the window to a specific screen corner
+        /// </summary>
+        /// <param name="corner">The corner to dock to (1=TopLeft, 2=TopRight, 3=BottomLeft, 4=BottomRight)</param>
+        private void DockToCorner(Corner corner)
+        {
+            // Use WorkArea to respect taskbar position
+            double workAreaLeft = SystemParameters.WorkArea.Left;
+            double workAreaTop = SystemParameters.WorkArea.Top;
+            double workAreaWidth = SystemParameters.WorkArea.Width;
+            double workAreaHeight = SystemParameters.WorkArea.Height;
+            double fullScreenWidth = SystemParameters.PrimaryScreenWidth;
+            double fullScreenHeight = SystemParameters.PrimaryScreenHeight;
+
+            // Get taskbar position using Windows API
+            TaskbarInfo.TaskbarPosition taskbarPosition = TaskbarInfo.GetTaskbarPosition();
+            bool isAutoHide = TaskbarInfo.IsTaskbarAutoHide();
+
+            // When auto-hide is enabled, treat as if no taskbar for positioning purposes
+            // (auto-hide taskbar doesn't reduce WorkArea, so we position at screen edge)
+            bool taskbarAtTop = (taskbarPosition == TaskbarInfo.TaskbarPosition.Top) && !isAutoHide;
+            bool taskbarAtBottom = (taskbarPosition == TaskbarInfo.TaskbarPosition.Bottom) && !isAutoHide;
+            bool taskbarAtLeft = (taskbarPosition == TaskbarInfo.TaskbarPosition.Left) && !isAutoHide;
+            bool taskbarAtRight = (taskbarPosition == TaskbarInfo.TaskbarPosition.Right) && !isAutoHide;
+
+            // DEBUG: Show taskbar detection on first call (only if debug mode enabled)
+            if (this.Tag == null && debugMode)
+            {
+                this.Tag = "shown"; // Use Tag to track if we've shown the debug message
+
+                double bottomGap = fullScreenHeight - (workAreaTop + workAreaHeight);
+                double rightGap = fullScreenWidth - (workAreaLeft + workAreaWidth);
+
+                MessageBox.Show(
+                    $"Taskbar Position (API): {taskbarPosition}\n" +
+                    $"Auto-Hide: {isAutoHide}\n\n" +
+                    $"WorkArea: Left={workAreaLeft}, Top={workAreaTop}\n" +
+                    $"          Width={workAreaWidth}, Height={workAreaHeight}\n\n" +
+                    $"FullScreen: Width={fullScreenWidth}, Height={fullScreenHeight}\n\n" +
+                    $"Gaps: Bottom={bottomGap}, Right={rightGap}",
+                    "Taskbar Detection Debug",
+                    MessageBoxButton.OK);
+            }
+
+            switch (corner)
+            {
+                case Corner.TopLeft:
+                    this.Left = workAreaLeft + 10;
+                    // WorkArea.Top is already 0 when no top taskbar, offset when taskbar at top
+                    this.Top = workAreaTop + 10;
+                    break;
+                case Corner.TopRight:
+                    this.Left = workAreaLeft + workAreaWidth - this.Width - 10;
+                    // WorkArea.Top is already 0 when no top taskbar, offset when taskbar at top
+                    this.Top = workAreaTop + 10;
+                    break;
+                case Corner.BottomLeft:
+                    this.Left = workAreaLeft + 10;
+                    // Position above bottom edge/taskbar with -20 margin (negative = up from bottom)
+                    this.Top = (taskbarAtBottom ? workAreaTop + workAreaHeight : fullScreenHeight) - this.Height - 20;
+                    break;
+                case Corner.BottomRight:
+                    this.Left = workAreaLeft + workAreaWidth - this.Width - 10;
+                    // Position above bottom edge/taskbar with -20 margin (negative = up from bottom)
+                    this.Top = (taskbarAtBottom ? workAreaTop + workAreaHeight : fullScreenHeight) - this.Height - 20;
+                    break;
+            }
         }
 
         /// <summary>
@@ -357,8 +578,18 @@ namespace FloatingClock
         /// <param name="e"></param>
         private void Clock_Tick(object sender, EventArgs e)
         {
-            AdjustWindowPosition();
-            DateTime now = DateTime.Now;            
+            // Detect taskbar changes by comparing both WorkArea and taskbar position
+            Rect currentWorkArea = SystemParameters.WorkArea;
+            TaskbarInfo.TaskbarPosition currentTaskbarPosition = TaskbarInfo.GetTaskbarPosition();
+
+            if (currentWorkArea != previousWorkArea || currentTaskbarPosition != previousTaskbarPosition)
+            {
+                previousWorkArea = currentWorkArea;
+                previousTaskbarPosition = currentTaskbarPosition;
+                AdjustWindowPosition();
+            }
+
+            DateTime now = DateTime.Now;
             DateBlock.Text = now.ToString(dateFormat);
 
             ClockBlock.Text = now.ToString(timeFormat);
