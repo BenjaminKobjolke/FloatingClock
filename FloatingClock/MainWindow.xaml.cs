@@ -2,6 +2,7 @@
 using IniParser.Model;
 using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -57,6 +58,8 @@ namespace FloatingClock
         private TaskbarInfo.TaskbarPosition previousTaskbarPosition;
 
         private System.Windows.Forms.Screen currentMonitor;
+
+        private CommandPaletteWindow commandPaletteWindow;
 
         public MainWindow()
         {
@@ -360,6 +363,120 @@ namespace FloatingClock
             SaveCornerToSettings();
         }
 
+        /// <summary>
+        /// Shows the command palette window
+        /// </summary>
+        private void ShowCommandPalette()
+        {
+            // Don't open multiple instances
+            if (commandPaletteWindow != null && commandPaletteWindow.IsVisible)
+                return;
+
+            // Get current command list with states
+            var commands = GetCommands();
+
+            // Create and show palette window
+            commandPaletteWindow = new CommandPaletteWindow(this, iniData, commands);
+            commandPaletteWindow.Owner = this;
+            commandPaletteWindow.ShowDialog();
+        }
+
+        /// <summary>
+        /// Gets the list of available commands with their current states
+        /// </summary>
+        private List<CommandItem> GetCommands()
+        {
+            var commands = new List<CommandItem>();
+
+            // Show/Hide Seconds
+            bool secondsVisible = ClockBlockSeconds.Visibility == Visibility.Visible;
+            commands.Add(new CommandItem(
+                secondsVisible ? "Hide Seconds" : "Show Seconds",
+                "S",
+                () => { ClockBlockSeconds.Visibility = secondsVisible ? Visibility.Collapsed : Visibility.Visible; },
+                secondsVisible
+            ));
+
+            // Toggle Fixed/Free Mode
+            commands.Add(new CommandItem(
+                fixedPosition ? "Switch to Free Mode" : "Switch to Fixed Mode",
+                "F",
+                () => {
+                    fixedPosition = !fixedPosition;
+                    if (fixedPosition)
+                    {
+                        DockToCorner(currentCorner);
+                        SaveCornerToSettings();
+                    }
+                },
+                fixedPosition
+            ));
+
+            // Move with arrow keys (informational only)
+            commands.Add(new CommandItem(
+                "Move with Arrow Keys",
+                "↑↓←→",
+                () => { /* No action - informational */ },
+                !fixedPosition
+            ));
+
+            // Dock to corners
+            commands.Add(new CommandItem(
+                "Dock to Top-Left",
+                "1",
+                () => { currentCorner = Corner.TopLeft; fixedPosition = true; DockToCorner(currentCorner); SaveCornerToSettings(); },
+                currentCorner == Corner.TopLeft && fixedPosition
+            ));
+
+            commands.Add(new CommandItem(
+                "Dock to Top-Right",
+                "2",
+                () => { currentCorner = Corner.TopRight; fixedPosition = true; DockToCorner(currentCorner); SaveCornerToSettings(); },
+                currentCorner == Corner.TopRight && fixedPosition
+            ));
+
+            commands.Add(new CommandItem(
+                "Dock to Bottom-Left",
+                "3",
+                () => { currentCorner = Corner.BottomLeft; fixedPosition = true; DockToCorner(currentCorner); SaveCornerToSettings(); },
+                currentCorner == Corner.BottomLeft && fixedPosition
+            ));
+
+            commands.Add(new CommandItem(
+                "Dock to Bottom-Right",
+                "4",
+                () => { currentCorner = Corner.BottomRight; fixedPosition = true; DockToCorner(currentCorner); SaveCornerToSettings(); },
+                currentCorner == Corner.BottomRight && fixedPosition
+            ));
+
+            // Cycle to next monitor
+            int monitorCount = System.Windows.Forms.Screen.AllScreens.Length;
+            commands.Add(new CommandItem(
+                monitorCount > 1 ? "Cycle to Next Monitor" : "Cycle to Next Monitor (only 1 available)",
+                "5",
+                () => { fixedPosition = true; CycleToNextMonitor(); },
+                false
+            ));
+
+            // Cycle to next corner
+            commands.Add(new CommandItem(
+                "Cycle to Next Corner",
+                "N",
+                () => { currentCorner = (Corner)(((int)currentCorner % 4) + 1); fixedPosition = true; DockToCorner(currentCorner); SaveCornerToSettings(); },
+                false
+            ));
+
+            // Exit application
+            commands.Add(new CommandItem(
+                "Exit Application",
+                "Esc",
+                () => { this.Close(); },
+                false
+            ));
+
+            return commands;
+        }
+
         private void SaveCornerToSettings()
         {
             try
@@ -452,11 +569,9 @@ namespace FloatingClock
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            bool shiftDown = false;
             int speed = 100;
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
             {
-                shiftDown = true;
                 speed = 10;
             }
             if (e.Key == Key.S)
@@ -473,6 +588,11 @@ namespace FloatingClock
                 {
                     fixedPosition = true;
                 }
+            }
+            else if (e.Key == Key.E)
+            {
+                // Show command palette
+                ShowCommandPalette();
             }
             else if (e.Key == Key.D1 || e.Key == Key.NumPad1)
             {
@@ -762,7 +882,16 @@ namespace FloatingClock
         {
             if (e.Key == Key.Escape)
             {
-                Close();
+                // If command palette is open, close it first
+                if (commandPaletteWindow != null && commandPaletteWindow.IsVisible)
+                {
+                    commandPaletteWindow.Close();
+                }
+                else
+                {
+                    // Otherwise close the application
+                    Close();
+                }
             }
         }
 
