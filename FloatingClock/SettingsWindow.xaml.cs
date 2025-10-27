@@ -331,7 +331,7 @@ namespace FloatingClock
             try
             {
                 // Font section
-                iniData["font"]["family"] = FontFamilyComboBox.SelectedItem?.ToString() ?? "Serif LED Board-7";
+                iniData["font"]["family"] = FontFamilyComboBox.SelectedItem?.ToString() ?? "Consolas";
 
                 // Window section (ensure integers, no decimals)
                 iniData["window"]["width"] = Math.Round(WindowWidthSlider.Value).ToString("F0", CultureInfo.InvariantCulture);

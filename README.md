@@ -186,7 +186,7 @@ horizontal_alignment=Center  # Left, Center, or Right
 ### Font Settings
 ```ini
 [font]
-family=Serif LED Board-7     # Font family name (must be installed on system)
+family=Consolas              # Font family name (default: Consolas, any installed font works)
 ```
 
 ### Command Palette Settings
@@ -229,9 +229,11 @@ show_icons=1                     # 1=Show ✓ indicators, 0=Hide indicators
 
 The compiled executable and `settings.ini` will be in the `bin/Debug` or `bin/Release` folder.
 
-### Suggested Font
+### Optional Font Enhancement
 
-For the authentic LED clock look shown in screenshots, download and install:
+The application uses **Consolas** by default (included with Windows). For an authentic LED clock look, you can optionally download and install:
 - **Serif LED Board-7** font: https://www.1001fonts.com/serif-led-board-7-font.html
 
-After installing the font, it will be used automatically by the application.
+After installing, change the font via:
+- Settings Editor → Font section, or
+- Manually edit `settings.ini`: `family=Serif LED Board-7`

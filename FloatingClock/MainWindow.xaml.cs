@@ -89,13 +89,13 @@ namespace FloatingClock
             var defaults = new IniData();
 
             // Font section
-            defaults["font"]["family"] = "Serif LED Board-7";
+            defaults["font"]["family"] = "Consolas";
 
             // Window section
-            defaults["window"]["x"] = "3500";
-            defaults["window"]["y"] = "50";
-            defaults["window"]["width"] = "220";
-            defaults["window"]["height"] = "88";
+            defaults["window"]["x"] = "3560";
+            defaults["window"]["y"] = "85";
+            defaults["window"]["width"] = "160";
+            defaults["window"]["height"] = "70";
             defaults["window"]["fixed"] = "1";
             defaults["window"]["fixed_corner"] = "4";
             defaults["window"]["debug"] = "0";
