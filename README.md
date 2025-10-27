@@ -17,6 +17,7 @@ _Screenshot of the Floating Clock application in the bottom right of my desktop.
 - **Settings Editor**: Comprehensive GUI for configuring all settings with color pickers, sliders, and live preview
 - **Command Palette**: Press **E** to open an interactive command menu with all available actions
 - **Multi-Monitor Support**: Cycle through monitors with keyboard shortcuts
+- **Taskbar Control**: Toggle Windows taskbar autohide mode with a single keypress
 - **Corner Docking**: Automatically dock to any screen corner with taskbar awareness
 - **Auto-Hide Taskbar Support**: Detects and adapts to auto-hide taskbars
 - **Adaptive Background**: Automatically adjusts transparency based on screen content behind the clock
@@ -45,6 +46,7 @@ Toggle between modes by pressing the **F** key.
 | **Escape** | Close command palette (if open), or exit application |
 | **S** | Toggle seconds display on/off |
 | **F** | Toggle between Fixed and Free position modes |
+| **T** | Toggle Windows taskbar autohide on/off |
 | **1** or **Numpad 1** | Dock to top-left corner |
 | **2** or **Numpad 2** | Dock to top-right corner |
 | **3** or **Numpad 3** | Dock to bottom-left corner |
@@ -59,7 +61,7 @@ Toggle between modes by pressing the **F** key.
 Press **E** to open the command palette - an interactive menu that displays all available commands with visual indicators for the current state.
 
 ### Features
-- **Visual State Indicators**: Active commands are marked with ✓ (e.g., seconds visibility, current corner position)
+- **Visual State Indicators**: Active commands are marked with ✓ (e.g., seconds visibility, current corner position, taskbar autohide status)
 - **Keyboard Navigation**: Use ↑/↓ arrow keys to select commands
 - **Quick Execution**: Press Enter to execute the selected command
 - **Smart Positioning**: The palette automatically positions itself to stay fully visible on screen

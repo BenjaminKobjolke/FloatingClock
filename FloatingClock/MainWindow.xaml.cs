@@ -61,6 +61,8 @@ namespace FloatingClock
 
         private CommandPaletteWindow commandPaletteWindow;
 
+        private bool isTaskbarHidden = false;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -576,6 +578,14 @@ namespace FloatingClock
                 false
             ));
 
+            // Toggle taskbar visibility
+            commands.Add(new CommandItem(
+                "Hide Windows Taskbar",
+                "T",
+                () => { ToggleTaskbarVisibility(); },
+                isTaskbarHidden
+            ));
+
             // Exit application
             commands.Add(new CommandItem(
                 "Exit Application",
@@ -585,6 +595,29 @@ namespace FloatingClock
             ));
 
             return commands;
+        }
+
+        /// <summary>
+        /// Toggles the Windows taskbar autohide state
+        /// </summary>
+        private void ToggleTaskbarVisibility()
+        {
+            // Get current taskbar state
+            APPBARDATA abd = new APPBARDATA();
+            abd.cbSize = Marshal.SizeOf(typeof(APPBARDATA));
+
+            IntPtr currentState = SHAppBarMessage(ABM_GETSTATE, ref abd);
+            int state = currentState.ToInt32();
+
+            // Toggle autohide state
+            bool isCurrentlyAutoHidden = (state & ABS_AUTOHIDE) != 0;
+
+            // Set new state (toggle autohide, preserve always-on-top)
+            abd.lParam = isCurrentlyAutoHidden ? new IntPtr(state & ~ABS_AUTOHIDE) : new IntPtr(state | ABS_AUTOHIDE);
+            SHAppBarMessage(ABM_SETSTATE, ref abd);
+
+            // Update tracking flag
+            isTaskbarHidden = !isCurrentlyAutoHidden;
         }
 
         /// <summary>
@@ -721,6 +754,11 @@ namespace FloatingClock
             {
                 // Show command palette
                 ShowCommandPalette();
+            }
+            else if (e.Key == Key.T)
+            {
+                // Toggle taskbar visibility
+                ToggleTaskbarVisibility();
             }
             else if (e.Key == Key.D1 || e.Key == Key.NumPad1)
             {
@@ -1093,6 +1131,38 @@ namespace FloatingClock
 
         [DllImport("kernel32.dll", EntryPoint = "SetLastError")]
         public static extern void SetLastError(int dwErrorCode);
+
+        [DllImport("shell32.dll")]
+        public static extern IntPtr SHAppBarMessage(int dwMessage, ref APPBARDATA pData);
+
+        // APPBARDATA structure for taskbar autohide
+        [StructLayout(LayoutKind.Sequential)]
+        public struct APPBARDATA
+        {
+            public int cbSize;
+            public IntPtr hWnd;
+            public int uCallbackMessage;
+            public int uEdge;
+            public RECT rc;
+            public IntPtr lParam;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int left;
+            public int top;
+            public int right;
+            public int bottom;
+        }
+
+        // AppBar message constants
+        private const int ABM_GETSTATE = 0x4;
+        private const int ABM_SETSTATE = 0xA;
+
+        // AppBar state constants
+        private const int ABS_AUTOHIDE = 0x1;
+        private const int ABS_ALWAYSONTOP = 0x2;
 
         /// <summary>
         /// Simple conversion from IntPtr to a int
