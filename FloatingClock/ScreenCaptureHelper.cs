@@ -37,8 +37,9 @@ namespace FloatingClock
 
                 window.Dispatcher.Invoke(() =>
                 {
-                    backgroundColor.A = alpha;
-                    window.Background = new SolidColorBrush(backgroundColor);
+                    // Create new color preserving RGB components, only changing Alpha
+                    Color adjustedColor = Color.FromArgb(alpha, backgroundColor.R, backgroundColor.G, backgroundColor.B);
+                    window.Background = new SolidColorBrush(adjustedColor);
                 });
             }
 

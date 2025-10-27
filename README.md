@@ -14,12 +14,13 @@ _Screenshot of the Floating Clock application in the bottom right of my desktop.
 
 ## Features
 
+- **Settings Editor**: Comprehensive GUI for configuring all settings with color pickers, sliders, and live preview
 - **Command Palette**: Press **E** to open an interactive command menu with all available actions
 - **Multi-Monitor Support**: Cycle through monitors with keyboard shortcuts
 - **Corner Docking**: Automatically dock to any screen corner with taskbar awareness
 - **Auto-Hide Taskbar Support**: Detects and adapts to auto-hide taskbars
 - **Adaptive Background**: Automatically adjusts transparency based on screen content behind the clock
-- **Customizable Appearance**: Configure colors, fonts, date/time formats via settings.ini
+- **Customizable Appearance**: Configure colors, fonts, date/time formats via GUI or settings.ini
 - **Position Persistence**: Remembers your preferred corner, position, and monitor across sessions
 - **Resolution Change Handling**: Validates and adjusts position when switching monitors or resolutions
 - **Debug Mode**: Optional startup diagnostic information
@@ -72,9 +73,52 @@ Press **E** to open the command palette - an interactive menu that displays all 
 
 The command palette provides access to all keyboard shortcuts in one convenient location, making it easier to discover and use features without memorizing hotkeys.
 
+## Settings Editor
+
+The Floating Clock includes a comprehensive GUI settings editor that allows you to configure all aspects of the application without manually editing the INI file.
+
+### Features
+- **Visual Configuration**: Edit all settings through an intuitive graphical interface
+- **Advanced Controls**: Color pickers, font selectors, sliders for numeric values, checkboxes for toggles
+- **Live Preview**: See color previews as you type hex codes
+- **Keyboard Navigation**: Fully accessible via Tab, Arrow keys, and Enter
+- **Auto-Restart**: Application automatically restarts when settings are saved to apply changes
+- **Validation**: Helpful hints and examples for format strings (date/time)
+
+### Opening Settings
+1. Press **E** to open the command palette
+2. Navigate to **"Open Settings"** and press Enter
+3. Alternatively, select it with arrow keys or click with mouse
+
+### Editing Settings
+- **Sliders**: Drag or use arrow keys for numeric values (sizes, thresholds, alpha values)
+- **Color Pickers**: Enter hex codes (e.g., #FFFFFF or #99000000 for ARGB)
+  - Color preview rectangles update in real-time
+- **Font Selectors**: Choose from all installed system fonts via dropdown
+- **Checkboxes**: Toggle boolean options (show/hide, enable/disable features)
+- **Dropdowns**: Select from predefined options (alignments, corners)
+- **Text Fields**: Enter custom formats for date/time display
+
+### Sections Available
+- **Font**: Choose the global font family
+- **Window**: Size, position mode, corner preference, debug mode
+- **Background**: Color, adaptive transparency settings
+- **Date Display**: Visibility, format, size, color, alignment
+- **Time Display**: Format, size, color, alignment
+- **Seconds Display**: Visibility, size, color, alignment
+- **Layout**: Stack panel alignment options
+- **Command Palette**: Appearance customization for the command palette itself
+
+### Saving Changes
+- Click **"Save & Restart"** to apply changes (app restarts automatically)
+- Click **"Cancel"** to discard changes
+- Close button prompts to save if changes detected
+
+**Note:** All changes are written to `settings.ini` and require an application restart to take effect. The restart happens automatically when you save.
+
 ## Configuration
 
-The application can be extensively customized by editing the `settings.ini` file in the application directory.
+The application can be extensively customized by editing the `settings.ini` file in the application directory, or more easily through the **Settings Editor** (see above).
 
 ### Window Settings
 ```ini

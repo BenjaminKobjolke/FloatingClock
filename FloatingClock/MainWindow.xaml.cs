@@ -84,11 +84,113 @@ namespace FloatingClock
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
         }
 
+        private IniData CreateDefaultSettings()
+        {
+            var defaults = new IniData();
+
+            // Font section
+            defaults["font"]["family"] = "Serif LED Board-7";
+
+            // Window section
+            defaults["window"]["x"] = "3500";
+            defaults["window"]["y"] = "50";
+            defaults["window"]["width"] = "220";
+            defaults["window"]["height"] = "88";
+            defaults["window"]["fixed"] = "1";
+            defaults["window"]["fixed_corner"] = "4";
+            defaults["window"]["debug"] = "0";
+            defaults["window"]["monitor"] = "";
+
+            // Background section
+            defaults["background"]["color"] = "#99000000";
+            defaults["background"]["auto_brightness_adjustment"] = "1";
+            defaults["background"]["threshold_change"] = "0.05";
+            defaults["background"]["threshold_min"] = "0.05";
+            defaults["background"]["threshold_max"] = "0.47";
+            defaults["background"]["alpha_max"] = "0.7";
+            defaults["background"]["alpha_min"] = "0.1";
+            defaults["background"]["damping"] = "0.1";
+
+            // Date section
+            defaults["date"]["show"] = "1";
+            defaults["date"]["x"] = "0";
+            defaults["date"]["y"] = "0";
+            defaults["date"]["size"] = "16";
+            defaults["date"]["format"] = "dd/MM/yyyy";
+            defaults["date"]["color"] = "#15fc11";
+            defaults["date"]["vertical_alignment"] = "Top";
+            defaults["date"]["horizontal_alignment"] = "Center";
+
+            // Time section
+            defaults["time"]["x"] = "0";
+            defaults["time"]["y"] = "0";
+            defaults["time"]["size"] = "42";
+            defaults["time"]["format"] = "HH:mm";
+            defaults["time"]["color"] = "#15fc11";
+            defaults["time"]["vertical_alignment"] = "Top";
+            defaults["time"]["horizontal_alignment"] = "Left";
+
+            // Seconds section
+            defaults["seconds"]["show"] = "1";
+            defaults["seconds"]["size"] = "15";
+            defaults["seconds"]["x"] = "5";
+            defaults["seconds"]["y"] = "-7";
+            defaults["seconds"]["color"] = "#15fc11";
+            defaults["seconds"]["vertical_alignment"] = "Top";
+            defaults["seconds"]["horizontal_alignment"] = "Center";
+
+            // StackPanel section
+            defaults["stackpanel"]["vertical_alignment"] = "Bottom";
+            defaults["stackpanel"]["horizontal_alignment"] = "Center";
+
+            // Command Palette section
+            defaults["command_palette"]["background_color"] = "#CC000000";
+            defaults["command_palette"]["text_color"] = "#FFFFFF";
+            defaults["command_palette"]["selected_background"] = "#40FFFFFF";
+            defaults["command_palette"]["selected_text_color"] = "#FFFFFF";
+            defaults["command_palette"]["font_family"] = "Consolas";
+            defaults["command_palette"]["font_size"] = "14";
+            defaults["command_palette"]["width"] = "400";
+            defaults["command_palette"]["padding"] = "10";
+            defaults["command_palette"]["item_padding"] = "5";
+            defaults["command_palette"]["show_icons"] = "1";
+
+            return defaults;
+        }
+
         private void LoadSettings()
         {
             string iniPath = "settings.ini";
             var parser = new FileIniDataParser();
-            iniData = parser.ReadFile(iniPath);
+
+            // Check if settings.ini exists, if not create with defaults
+            if (!System.IO.File.Exists(iniPath))
+            {
+                try
+                {
+                    iniData = CreateDefaultSettings();
+                    parser.WriteFile(iniPath, iniData);
+                    Debug.WriteLine("Created default settings.ini");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error creating default settings.ini: {ex.Message}");
+                    iniData = CreateDefaultSettings(); // Use defaults in memory
+                }
+            }
+            else
+            {
+                try
+                {
+                    iniData = parser.ReadFile(iniPath);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error reading settings.ini: {ex.Message}. Using defaults.");
+                    MessageBox.Show($"Error reading settings.ini: {ex.Message}\nUsing default settings.", "Settings Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    iniData = CreateDefaultSettings();
+                }
+            }
 
             string fontFamilyName = iniData["font"]["family"];
             if (!string.IsNullOrEmpty(fontFamilyName))
@@ -466,6 +568,14 @@ namespace FloatingClock
                 false
             ));
 
+            // Open settings
+            commands.Add(new CommandItem(
+                "Open Settings",
+                "Settings",
+                () => { ShowSettingsWindow(); },
+                false
+            ));
+
             // Exit application
             commands.Add(new CommandItem(
                 "Exit Application",
@@ -475,6 +585,24 @@ namespace FloatingClock
             ));
 
             return commands;
+        }
+
+        /// <summary>
+        /// Shows the settings editor window
+        /// </summary>
+        private void ShowSettingsWindow()
+        {
+            try
+            {
+                var settingsWindow = new SettingsWindow(iniData);
+                settingsWindow.Owner = this;
+                settingsWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error opening settings window: {ex.Message}");
+                MessageBox.Show($"Error opening settings: {ex.Message}", "Settings Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void SaveCornerToSettings()
