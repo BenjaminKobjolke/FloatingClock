@@ -4,6 +4,7 @@ using Microsoft.Win32;
 using System;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
@@ -54,6 +55,8 @@ namespace FloatingClock
 
         private Rect previousWorkArea;
         private TaskbarInfo.TaskbarPosition previousTaskbarPosition;
+
+        private System.Windows.Forms.Screen currentMonitor;
 
         public MainWindow()
         {
@@ -121,6 +124,19 @@ namespace FloatingClock
             int heightWindow = Convert.ToInt32(iniData["window"]["height"]);
             this.Width = widthWindow;
             this.Height = heightWindow;
+
+            // Load and validate monitor setting
+            string monitorDeviceName = iniData["window"]["monitor"];
+            if (!string.IsNullOrEmpty(monitorDeviceName))
+            {
+                currentMonitor = GetMonitorByDeviceName(monitorDeviceName);
+            }
+
+            // If monitor not found or not specified, fall back to first available monitor
+            if (currentMonitor == null)
+            {
+                currentMonitor = System.Windows.Forms.Screen.AllScreens.FirstOrDefault() ?? System.Windows.Forms.Screen.PrimaryScreen;
+            }
 
             // Handle non-fixed position with validation
             if(!fixedPosition)
@@ -287,12 +303,70 @@ namespace FloatingClock
             throw new FormatException("String is not a valid double format.");
         }
 
+        /// <summary>
+        /// Finds a monitor by its device name
+        /// </summary>
+        /// <param name="deviceName">Device name (e.g., "\\\\.\\DISPLAY1")</param>
+        /// <returns>The Screen object if found, otherwise null</returns>
+        private System.Windows.Forms.Screen GetMonitorByDeviceName(string deviceName)
+        {
+            if (string.IsNullOrEmpty(deviceName))
+                return null;
+
+            return System.Windows.Forms.Screen.AllScreens.FirstOrDefault(s => s.DeviceName == deviceName);
+        }
+
+        /// <summary>
+        /// Gets the monitor that currently contains the window
+        /// </summary>
+        /// <returns>The Screen object containing the window</returns>
+        private System.Windows.Forms.Screen GetCurrentMonitor()
+        {
+            WindowInteropHelper windowInteropHelper = new WindowInteropHelper(this);
+            System.Windows.Forms.Screen screen = System.Windows.Forms.Screen.FromHandle(windowInteropHelper.Handle);
+            return screen;
+        }
+
+        /// <summary>
+        /// Cycles to the next available monitor while preserving the current corner position
+        /// </summary>
+        private void CycleToNextMonitor()
+        {
+            System.Windows.Forms.Screen[] allScreens = System.Windows.Forms.Screen.AllScreens;
+
+            // If only one monitor, nothing to cycle
+            if (allScreens.Length <= 1)
+                return;
+
+            // Find current monitor index
+            int currentIndex = -1;
+            for (int i = 0; i < allScreens.Length; i++)
+            {
+                if (allScreens[i].DeviceName == currentMonitor.DeviceName)
+                {
+                    currentIndex = i;
+                    break;
+                }
+            }
+
+            // Move to next monitor (wrap around to first if at end)
+            int nextIndex = (currentIndex + 1) % allScreens.Length;
+            currentMonitor = allScreens[nextIndex];
+
+            // Re-dock to the same corner on the new monitor
+            DockToCorner(currentCorner);
+
+            // Save the new monitor to settings
+            SaveCornerToSettings();
+        }
+
         private void SaveCornerToSettings()
         {
             try
             {
                 iniData["window"]["fixed_corner"] = ((int)currentCorner).ToString();
                 iniData["window"]["fixed"] = fixedPosition ? "1" : "0";
+                iniData["window"]["monitor"] = currentMonitor?.DeviceName ?? "";
                 var parser = new FileIniDataParser();
                 parser.WriteFile("settings.ini", iniData);
             }
@@ -307,6 +381,9 @@ namespace FloatingClock
         {
             try
             {
+                // Update current monitor before saving
+                currentMonitor = GetCurrentMonitor();
+
                 // Save current window position (convert WPF coordinates to INI format)
                 int xWindow = (int)this.Left;
                 int yWindow = (int)(SystemParameters.FullPrimaryScreenHeight - this.Top);
@@ -315,6 +392,7 @@ namespace FloatingClock
                 iniData["window"]["y"] = yWindow.ToString();
                 iniData["window"]["fixed"] = fixedPosition ? "1" : "0";
                 iniData["window"]["fixed_corner"] = ((int)currentCorner).ToString();
+                iniData["window"]["monitor"] = currentMonitor?.DeviceName ?? "";
 
                 var parser = new FileIniDataParser();
                 parser.WriteFile("settings.ini", iniData);
@@ -332,11 +410,17 @@ namespace FloatingClock
         /// </summary>
         private void ValidateAndAdjustPosition(ref double left, ref double top, double windowWidth, double windowHeight)
         {
-            // Get current screen bounds (WorkArea respects taskbar)
-            double workAreaLeft = SystemParameters.WorkArea.Left;
-            double workAreaTop = SystemParameters.WorkArea.Top;
-            double workAreaWidth = SystemParameters.WorkArea.Width;
-            double workAreaHeight = SystemParameters.WorkArea.Height;
+            // Ensure we have a valid monitor
+            if (currentMonitor == null)
+            {
+                currentMonitor = System.Windows.Forms.Screen.AllScreens.FirstOrDefault() ?? System.Windows.Forms.Screen.PrimaryScreen;
+            }
+
+            // Get current monitor's work area (respects taskbar)
+            double workAreaLeft = currentMonitor.WorkingArea.X;
+            double workAreaTop = currentMonitor.WorkingArea.Y;
+            double workAreaWidth = currentMonitor.WorkingArea.Width;
+            double workAreaHeight = currentMonitor.WorkingArea.Height;
 
             // Ensure window stays within work area
             // Left edge: clamp to work area left
@@ -418,6 +502,12 @@ namespace FloatingClock
                 DockToCorner(currentCorner);
                 SaveCornerToSettings();
             }
+            else if (e.Key == Key.D5 || e.Key == Key.NumPad5)
+            {
+                // Cycle to next monitor (if available)
+                fixedPosition = true;
+                CycleToNextMonitor();
+            }
             else if (e.Key == Key.N)
             {
                 // Cycle to next corner: 1->2->3->4->1
@@ -429,22 +519,50 @@ namespace FloatingClock
             else if (e.Key == Key.Left)
             {
                 fixedPosition = false;
-                this.Left = this.Left - speed;
+                double newLeft = this.Left - speed;
+                double newTop = this.Top;
+
+                // Update current monitor and validate position stays within bounds
+                currentMonitor = GetCurrentMonitor();
+                ValidateAndAdjustPosition(ref newLeft, ref newTop, this.Width, this.Height);
+
+                this.Left = newLeft;
             }
             else if (e.Key == Key.Right)
             {
                 fixedPosition = false;
-                this.Left = this.Left + speed;
+                double newLeft = this.Left + speed;
+                double newTop = this.Top;
+
+                // Update current monitor and validate position stays within bounds
+                currentMonitor = GetCurrentMonitor();
+                ValidateAndAdjustPosition(ref newLeft, ref newTop, this.Width, this.Height);
+
+                this.Left = newLeft;
             }
             else if (e.Key == Key.Up)
             {
                 fixedPosition = false;
-                this.Top = this.Top - speed;
+                double newLeft = this.Left;
+                double newTop = this.Top - speed;
+
+                // Update current monitor and validate position stays within bounds
+                currentMonitor = GetCurrentMonitor();
+                ValidateAndAdjustPosition(ref newLeft, ref newTop, this.Width, this.Height);
+
+                this.Top = newTop;
             }
             else if (e.Key == Key.Down)
             {
                 fixedPosition = false;
-                this.Top = this.Top + speed;
+                double newLeft = this.Left;
+                double newTop = this.Top + speed;
+
+                // Update current monitor and validate position stays within bounds
+                currentMonitor = GetCurrentMonitor();
+                ValidateAndAdjustPosition(ref newLeft, ref newTop, this.Width, this.Height);
+
+                this.Top = newTop;
             }
         }      
 
@@ -490,6 +608,20 @@ namespace FloatingClock
 
         private void SystemEvents_DisplaySettingsChanged(object sender, EventArgs e)
         {
+            // Re-validate current monitor (it may have been disconnected)
+            if (currentMonitor != null)
+            {
+                // Check if current monitor still exists
+                string currentDeviceName = currentMonitor.DeviceName;
+                currentMonitor = GetMonitorByDeviceName(currentDeviceName);
+
+                // If monitor no longer exists, fall back to first available
+                if (currentMonitor == null)
+                {
+                    currentMonitor = System.Windows.Forms.Screen.AllScreens.FirstOrDefault() ?? System.Windows.Forms.Screen.PrimaryScreen;
+                }
+            }
+
             AdjustWindowPosition();
         }
 
@@ -508,13 +640,19 @@ namespace FloatingClock
         /// <param name="corner">The corner to dock to (1=TopLeft, 2=TopRight, 3=BottomLeft, 4=BottomRight)</param>
         private void DockToCorner(Corner corner)
         {
-            // Use WorkArea to respect taskbar position
-            double workAreaLeft = SystemParameters.WorkArea.Left;
-            double workAreaTop = SystemParameters.WorkArea.Top;
-            double workAreaWidth = SystemParameters.WorkArea.Width;
-            double workAreaHeight = SystemParameters.WorkArea.Height;
-            double fullScreenWidth = SystemParameters.PrimaryScreenWidth;
-            double fullScreenHeight = SystemParameters.PrimaryScreenHeight;
+            // Ensure we have a valid monitor
+            if (currentMonitor == null)
+            {
+                currentMonitor = System.Windows.Forms.Screen.AllScreens.FirstOrDefault() ?? System.Windows.Forms.Screen.PrimaryScreen;
+            }
+
+            // Use WorkingArea to respect taskbar position on the current monitor
+            double workAreaLeft = currentMonitor.WorkingArea.X;
+            double workAreaTop = currentMonitor.WorkingArea.Y;
+            double workAreaWidth = currentMonitor.WorkingArea.Width;
+            double workAreaHeight = currentMonitor.WorkingArea.Height;
+            double fullScreenWidth = currentMonitor.Bounds.Width;
+            double fullScreenHeight = currentMonitor.Bounds.Height;
 
             // Get taskbar position using Windows API
             TaskbarInfo.TaskbarPosition taskbarPosition = TaskbarInfo.GetTaskbarPosition();
