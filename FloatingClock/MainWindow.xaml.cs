@@ -987,12 +987,12 @@ namespace FloatingClock
                 case Corner.BottomLeft:
                     this.Left = workAreaLeft + 10;
                     // Position above bottom edge/taskbar with -20 margin (negative = up from bottom)
-                    this.Top = (taskbarAtBottom ? workAreaTop + workAreaHeight : fullScreenHeight) - this.Height - 20;
+                    this.Top = workAreaTop + workAreaHeight - this.Height - 20;
                     break;
                 case Corner.BottomRight:
                     this.Left = workAreaLeft + workAreaWidth - this.Width - 10;
                     // Position above bottom edge/taskbar with -20 margin (negative = up from bottom)
-                    this.Top = (taskbarAtBottom ? workAreaTop + workAreaHeight : fullScreenHeight) - this.Height - 20;
+                    this.Top = workAreaTop + workAreaHeight - this.Height - 20;
                     break;
             }
         }
