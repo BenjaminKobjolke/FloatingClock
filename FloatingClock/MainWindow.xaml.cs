@@ -503,7 +503,7 @@ namespace FloatingClock
 
             // Toggle Fixed/Free Mode
             commands.Add(new CommandItem(
-                fixedPosition ? "Switch to Free Mode" : "Switch to Fixed Mode",
+                "Free Position Mode",
                 "F",
                 () => {
                     fixedPosition = !fixedPosition;
@@ -513,7 +513,7 @@ namespace FloatingClock
                         SaveCornerToSettings();
                     }
                 },
-                fixedPosition
+                !fixedPosition
             ));
 
             // Move with arrow keys (informational only)
@@ -748,6 +748,8 @@ namespace FloatingClock
                 else
                 {
                     fixedPosition = true;
+                    DockToCorner(currentCorner);
+                    SaveCornerToSettings();
                 }
             }
             else if (e.Key == Key.E)
