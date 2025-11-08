@@ -64,6 +64,9 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="CommandItem.cs" />
+    <Compile Include="Managers\MonitorManager.cs" />
+    <Compile Include="Managers\SettingsManager.cs" />
+    <Compile Include="Managers\WindowPositionManager.cs" />
     <Compile Include="ScreenCaptureHelper.cs" />
     <Compile Include="TaskbarInfo.cs" />
     <Page Include="CommandPaletteWindow.xaml">
