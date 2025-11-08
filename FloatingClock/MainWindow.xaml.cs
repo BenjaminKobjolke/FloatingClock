@@ -435,6 +435,26 @@ namespace FloatingClock
         }
 
         /// <summary>
+        /// Gets the DPI scaling factors for the current window
+        /// </summary>
+        /// <param name="dpiScaleX">Horizontal DPI scale where 1.0 = 100%, 1.25 = 125%, etc.</param>
+        /// <param name="dpiScaleY">Vertical DPI scale where 1.0 = 100%, 1.25 = 125%, etc.</param>
+        private void GetDpiScale(out double dpiScaleX, out double dpiScaleY)
+        {
+            PresentationSource source = PresentationSource.FromVisual(this);
+            if (source?.CompositionTarget != null)
+            {
+                dpiScaleX = source.CompositionTarget.TransformToDevice.M11;
+                dpiScaleY = source.CompositionTarget.TransformToDevice.M22;
+            }
+            else
+            {
+                dpiScaleX = 1.0; // Fallback to 100% scaling if source not available
+                dpiScaleY = 1.0;
+            }
+        }
+
+        /// <summary>
         /// Cycles to the next available monitor while preserving the current corner position
         /// </summary>
         private void CycleToNextMonitor()
@@ -694,11 +714,16 @@ namespace FloatingClock
                 currentMonitor = System.Windows.Forms.Screen.AllScreens.FirstOrDefault() ?? System.Windows.Forms.Screen.PrimaryScreen;
             }
 
+            // Get DPI scaling to convert from physical pixels to DIPs
+            double dpiScaleX, dpiScaleY;
+            GetDpiScale(out dpiScaleX, out dpiScaleY);
+
             // Get current monitor's work area (respects taskbar)
-            double workAreaLeft = currentMonitor.WorkingArea.X;
-            double workAreaTop = currentMonitor.WorkingArea.Y;
-            double workAreaWidth = currentMonitor.WorkingArea.Width;
-            double workAreaHeight = currentMonitor.WorkingArea.Height;
+            // Convert from physical pixels (Screen API) to device-independent pixels (WPF)
+            double workAreaLeft = currentMonitor.WorkingArea.X / dpiScaleX;
+            double workAreaTop = currentMonitor.WorkingArea.Y / dpiScaleY;
+            double workAreaWidth = currentMonitor.WorkingArea.Width / dpiScaleX;
+            double workAreaHeight = currentMonitor.WorkingArea.Height / dpiScaleY;
 
             // Ensure window stays within work area
             // Left edge: clamp to work area left
@@ -801,8 +826,40 @@ namespace FloatingClock
                 // Cycle to next corner: 1->2->3->4->1
                 currentCorner = (Corner)(((int)currentCorner % 4) + 1);
                 fixedPosition = true;
+                currentMonitor = GetCurrentMonitor();
                 DockToCorner(currentCorner);
                 SaveCornerToSettings();
+            }
+            else if (e.Key == Key.I)
+            {
+                // Show window and monitor information
+                currentMonitor = GetCurrentMonitor();
+
+                double dpiScaleX, dpiScaleY;
+                GetDpiScale(out dpiScaleX, out dpiScaleY);
+                TaskbarInfo.TaskbarPosition taskbarPosition = TaskbarInfo.GetTaskbarPosition();
+                bool isAutoHide = TaskbarInfo.IsTaskbarAutoHide();
+
+                string positionMode = fixedPosition ? $"Fixed (Corner: {currentCorner})" : "Free Position";
+
+                MessageBox.Show(
+                    $"Window Information\n\n" +
+                    $"DPI Scaling: {dpiScaleX * 100:F0}% x {dpiScaleY * 100:F0}%\n\n" +
+                    $"Position Mode: {positionMode}\n\n" +
+                    $"Current Position (DIPs):\n" +
+                    $"  Left: {this.Left:F1}\n" +
+                    $"  Top: {this.Top:F1}\n\n" +
+                    $"Window Size:\n" +
+                    $"  Desired: {this.Width:F1} x {this.Height:F1}\n" +
+                    $"  Actual: {this.ActualWidth:F1} x {this.ActualHeight:F1}\n\n" +
+                    $"Monitor: {currentMonitor.DeviceName}\n" +
+                    $"  Full Bounds (Physical): {currentMonitor.Bounds.X}, {currentMonitor.Bounds.Y}, {currentMonitor.Bounds.Width}x{currentMonitor.Bounds.Height}\n" +
+                    $"  Full Bounds (DIPs): {currentMonitor.Bounds.X / dpiScaleX:F1}, {currentMonitor.Bounds.Y / dpiScaleY:F1}, {currentMonitor.Bounds.Width / dpiScaleX:F1}x{currentMonitor.Bounds.Height / dpiScaleY:F1}\n" +
+                    $"  Working Area (Physical): {currentMonitor.WorkingArea.X}, {currentMonitor.WorkingArea.Y}, {currentMonitor.WorkingArea.Width}x{currentMonitor.WorkingArea.Height}\n" +
+                    $"  Working Area (DIPs): {currentMonitor.WorkingArea.X / dpiScaleX:F1}, {currentMonitor.WorkingArea.Y / dpiScaleY:F1}, {currentMonitor.WorkingArea.Width / dpiScaleX:F1}x{currentMonitor.WorkingArea.Height / dpiScaleY:F1}\n\n" +
+                    $"Taskbar: {taskbarPosition} (Auto-Hide: {isAutoHide})",
+                    "Window Info",
+                    MessageBoxButton.OK);
             }
             else if (e.Key == Key.Left)
             {
@@ -934,13 +991,18 @@ namespace FloatingClock
                 currentMonitor = System.Windows.Forms.Screen.AllScreens.FirstOrDefault() ?? System.Windows.Forms.Screen.PrimaryScreen;
             }
 
+            // Get DPI scaling to convert from physical pixels to DIPs
+            double dpiScaleX, dpiScaleY;
+            GetDpiScale(out dpiScaleX, out dpiScaleY);
+
             // Use WorkingArea to respect taskbar position on the current monitor
-            double workAreaLeft = currentMonitor.WorkingArea.X;
-            double workAreaTop = currentMonitor.WorkingArea.Y;
-            double workAreaWidth = currentMonitor.WorkingArea.Width;
-            double workAreaHeight = currentMonitor.WorkingArea.Height;
-            double fullScreenWidth = currentMonitor.Bounds.Width;
-            double fullScreenHeight = currentMonitor.Bounds.Height;
+            // Convert from physical pixels (Screen API) to device-independent pixels (WPF)
+            double workAreaLeft = currentMonitor.WorkingArea.X / dpiScaleX;
+            double workAreaTop = currentMonitor.WorkingArea.Y / dpiScaleY;
+            double workAreaWidth = currentMonitor.WorkingArea.Width / dpiScaleX;
+            double workAreaHeight = currentMonitor.WorkingArea.Height / dpiScaleY;
+            double fullScreenWidth = currentMonitor.Bounds.Width / dpiScaleX;
+            double fullScreenHeight = currentMonitor.Bounds.Height / dpiScaleY;
 
             // Get taskbar position using Windows API
             TaskbarInfo.TaskbarPosition taskbarPosition = TaskbarInfo.GetTaskbarPosition();
@@ -953,22 +1015,59 @@ namespace FloatingClock
             bool taskbarAtLeft = (taskbarPosition == TaskbarInfo.TaskbarPosition.Left) && !isAutoHide;
             bool taskbarAtRight = (taskbarPosition == TaskbarInfo.TaskbarPosition.Right) && !isAutoHide;
 
-            // DEBUG: Show taskbar detection on first call (only if debug mode enabled)
-            if (this.Tag == null && debugMode)
-            {
-                this.Tag = "shown"; // Use Tag to track if we've shown the debug message
+            // Use ActualWidth/ActualHeight for accurate positioning (falls back to Width/Height if not yet rendered)
+            double windowWidth = this.ActualWidth > 0 ? this.ActualWidth : this.Width;
+            double windowHeight = this.ActualHeight > 0 ? this.ActualHeight : this.Height;
 
-                double bottomGap = fullScreenHeight - (workAreaTop + workAreaHeight);
-                double rightGap = fullScreenWidth - (workAreaLeft + workAreaWidth);
+            // DEBUG: Show debug information when debug mode is enabled
+            if (debugMode)
+            {
+                // Calculate target position before moving
+                double targetLeft = 0;
+                double targetTop = 0;
+
+                switch (corner)
+                {
+                    case Corner.TopLeft:
+                        targetLeft = workAreaLeft + 10;
+                        targetTop = workAreaTop + 10;
+                        break;
+                    case Corner.TopRight:
+                        targetLeft = workAreaLeft + workAreaWidth - windowWidth - 10;
+                        targetTop = workAreaTop + 10;
+                        break;
+                    case Corner.BottomLeft:
+                        targetLeft = workAreaLeft + 10;
+                        targetTop = workAreaTop + workAreaHeight - windowHeight - 20;
+                        break;
+                    case Corner.BottomRight:
+                        targetLeft = workAreaLeft + workAreaWidth - windowWidth - 10;
+                        targetTop = workAreaTop + workAreaHeight - windowHeight - 20;
+                        break;
+                }
+
+                double targetRight = targetLeft + windowWidth;
+                double targetBottom = targetTop + windowHeight;
 
                 MessageBox.Show(
-                    $"Taskbar Position (API): {taskbarPosition}\n" +
-                    $"Auto-Hide: {isAutoHide}\n\n" +
-                    $"WorkArea: Left={workAreaLeft}, Top={workAreaTop}\n" +
-                    $"          Width={workAreaWidth}, Height={workAreaHeight}\n\n" +
-                    $"FullScreen: Width={fullScreenWidth}, Height={fullScreenHeight}\n\n" +
-                    $"Gaps: Bottom={bottomGap}, Right={rightGap}",
-                    "Taskbar Detection Debug",
+                    $"DEBUG: Corner Positioning\n\n" +
+                    $"DPI Scaling: {dpiScaleX * 100:F0}% x {dpiScaleY * 100:F0}%\n\n" +
+                    $"Monitor: {currentMonitor.DeviceName}\n\n" +
+                    $"Screen Bounds (Physical Pixels):\n" +
+                    $"  Full: {currentMonitor.Bounds.X}, {currentMonitor.Bounds.Y}, {currentMonitor.Bounds.Width}x{currentMonitor.Bounds.Height}\n" +
+                    $"  Working Area: {currentMonitor.WorkingArea.X}, {currentMonitor.WorkingArea.Y}, {currentMonitor.WorkingArea.Width}x{currentMonitor.WorkingArea.Height}\n\n" +
+                    $"Screen Bounds (DIPs - after scaling):\n" +
+                    $"  Full: {currentMonitor.Bounds.X / dpiScaleX:F1}, {currentMonitor.Bounds.Y / dpiScaleY:F1}, {fullScreenWidth:F1}x{fullScreenHeight:F1}\n" +
+                    $"  Working Area: {workAreaLeft:F1}, {workAreaTop:F1}, {workAreaWidth:F1}x{workAreaHeight:F1}\n\n" +
+                    $"Taskbar: {taskbarPosition} (Auto-Hide: {isAutoHide})\n\n" +
+                    $"Target Corner: {corner}\n\n" +
+                    $"Window Size (Actual): {this.ActualWidth:F1} x {this.ActualHeight:F1}\n" +
+                    $"Window Size (Desired): {this.Width:F1} x {this.Height:F1}\n" +
+                    $"Window Size (Used): {windowWidth:F1} x {windowHeight:F1}\n\n" +
+                    $"Target Position (DIPs):\n" +
+                    $"  Top-Left: ({targetLeft:F1}, {targetTop:F1})\n" +
+                    $"  Bottom-Right: ({targetRight:F1}, {targetBottom:F1})",
+                    "Debug: DockToCorner",
                     MessageBoxButton.OK);
             }
 
@@ -980,19 +1079,19 @@ namespace FloatingClock
                     this.Top = workAreaTop + 10;
                     break;
                 case Corner.TopRight:
-                    this.Left = workAreaLeft + workAreaWidth - this.Width - 10;
+                    this.Left = workAreaLeft + workAreaWidth - windowWidth - 10;
                     // WorkArea.Top is already 0 when no top taskbar, offset when taskbar at top
                     this.Top = workAreaTop + 10;
                     break;
                 case Corner.BottomLeft:
                     this.Left = workAreaLeft + 10;
                     // Position above bottom edge/taskbar with -20 margin (negative = up from bottom)
-                    this.Top = workAreaTop + workAreaHeight - this.Height - 20;
+                    this.Top = workAreaTop + workAreaHeight - windowHeight - 20;
                     break;
                 case Corner.BottomRight:
-                    this.Left = workAreaLeft + workAreaWidth - this.Width - 10;
+                    this.Left = workAreaLeft + workAreaWidth - windowWidth - 10;
                     // Position above bottom edge/taskbar with -20 margin (negative = up from bottom)
-                    this.Top = workAreaTop + workAreaHeight - this.Height - 20;
+                    this.Top = workAreaTop + workAreaHeight - windowHeight - 20;
                     break;
             }
         }
