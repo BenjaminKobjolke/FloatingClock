@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
+using FloatingClock.Managers;
 
 namespace FloatingClock
 {
@@ -63,9 +64,19 @@ namespace FloatingClock
 
         private bool isTaskbarHidden = false;
 
+        // Managers for separation of concerns
+        private MonitorManager monitorManager;
+        private SettingsManager settingsManager;
+        private WindowPositionManager positionManager;
+
         public MainWindow()
         {
             InitializeComponent();
+
+            // Initialize managers
+            monitorManager = new MonitorManager();
+            settingsManager = new SettingsManager();
+            positionManager = new WindowPositionManager(monitorManager);
 
             // set up basic event handlers
             FloatingClockWindow.MouseMove += MainWindow_MouseMove;
@@ -86,113 +97,11 @@ namespace FloatingClock
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
         }
 
-        private IniData CreateDefaultSettings()
-        {
-            var defaults = new IniData();
-
-            // Font section
-            defaults["font"]["family"] = "Consolas";
-
-            // Window section
-            defaults["window"]["x"] = "3560";
-            defaults["window"]["y"] = "85";
-            defaults["window"]["width"] = "160";
-            defaults["window"]["height"] = "70";
-            defaults["window"]["fixed"] = "1";
-            defaults["window"]["fixed_corner"] = "4";
-            defaults["window"]["debug"] = "0";
-            defaults["window"]["monitor"] = "";
-
-            // Background section
-            defaults["background"]["color"] = "#99000000";
-            defaults["background"]["auto_brightness_adjustment"] = "1";
-            defaults["background"]["threshold_change"] = "0.05";
-            defaults["background"]["threshold_min"] = "0.05";
-            defaults["background"]["threshold_max"] = "0.47";
-            defaults["background"]["alpha_max"] = "0.7";
-            defaults["background"]["alpha_min"] = "0.1";
-            defaults["background"]["damping"] = "0.1";
-
-            // Date section
-            defaults["date"]["show"] = "1";
-            defaults["date"]["x"] = "0";
-            defaults["date"]["y"] = "0";
-            defaults["date"]["size"] = "16";
-            defaults["date"]["format"] = "dd/MM/yyyy";
-            defaults["date"]["color"] = "#15fc11";
-            defaults["date"]["vertical_alignment"] = "Top";
-            defaults["date"]["horizontal_alignment"] = "Center";
-
-            // Time section
-            defaults["time"]["x"] = "0";
-            defaults["time"]["y"] = "0";
-            defaults["time"]["size"] = "42";
-            defaults["time"]["format"] = "HH:mm";
-            defaults["time"]["color"] = "#15fc11";
-            defaults["time"]["vertical_alignment"] = "Top";
-            defaults["time"]["horizontal_alignment"] = "Left";
-
-            // Seconds section
-            defaults["seconds"]["show"] = "1";
-            defaults["seconds"]["size"] = "15";
-            defaults["seconds"]["x"] = "5";
-            defaults["seconds"]["y"] = "-7";
-            defaults["seconds"]["color"] = "#15fc11";
-            defaults["seconds"]["vertical_alignment"] = "Top";
-            defaults["seconds"]["horizontal_alignment"] = "Center";
-
-            // StackPanel section
-            defaults["stackpanel"]["vertical_alignment"] = "Bottom";
-            defaults["stackpanel"]["horizontal_alignment"] = "Center";
-
-            // Command Palette section
-            defaults["command_palette"]["background_color"] = "#CC000000";
-            defaults["command_palette"]["text_color"] = "#FFFFFF";
-            defaults["command_palette"]["selected_background"] = "#40FFFFFF";
-            defaults["command_palette"]["selected_text_color"] = "#FFFFFF";
-            defaults["command_palette"]["font_family"] = "Consolas";
-            defaults["command_palette"]["font_size"] = "14";
-            defaults["command_palette"]["width"] = "400";
-            defaults["command_palette"]["padding"] = "10";
-            defaults["command_palette"]["item_padding"] = "5";
-            defaults["command_palette"]["show_icons"] = "1";
-
-            return defaults;
-        }
 
         private void LoadSettings()
         {
-            string iniPath = "settings.ini";
-            var parser = new FileIniDataParser();
-
-            // Check if settings.ini exists, if not create with defaults
-            if (!System.IO.File.Exists(iniPath))
-            {
-                try
-                {
-                    iniData = CreateDefaultSettings();
-                    parser.WriteFile(iniPath, iniData);
-                    Debug.WriteLine("Created default settings.ini");
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error creating default settings.ini: {ex.Message}");
-                    iniData = CreateDefaultSettings(); // Use defaults in memory
-                }
-            }
-            else
-            {
-                try
-                {
-                    iniData = parser.ReadFile(iniPath);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error reading settings.ini: {ex.Message}. Using defaults.");
-                    MessageBox.Show($"Error reading settings.ini: {ex.Message}\nUsing default settings.", "Settings Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    iniData = CreateDefaultSettings();
-                }
-            }
+            settingsManager.LoadSettings();
+            iniData = settingsManager.Data;
 
             string fontFamilyName = iniData["font"]["family"];
             if (!string.IsNullOrEmpty(fontFamilyName))
@@ -236,7 +145,7 @@ namespace FloatingClock
             string monitorDeviceName = iniData["window"]["monitor"];
             if (!string.IsNullOrEmpty(monitorDeviceName))
             {
-                currentMonitor = GetMonitorByDeviceName(monitorDeviceName);
+                currentMonitor = monitorManager.GetMonitorByDeviceName(monitorDeviceName);
             }
 
             // If monitor not found or not specified, fall back to first available monitor
@@ -255,7 +164,7 @@ namespace FloatingClock
                 double desiredTop = SystemParameters.FullPrimaryScreenHeight - yWindow;
 
                 // Validate and adjust position to ensure it's within screen bounds
-                ValidateAndAdjustPosition(ref desiredLeft, ref desiredTop, this.Width, this.Height);
+                positionManager.ValidateAndAdjustPosition(ref desiredLeft, ref desiredTop, this.Width, this.Height, currentMonitor, this);
 
                 this.Left = desiredLeft;
                 this.Top = desiredTop;
@@ -415,70 +324,13 @@ namespace FloatingClock
         /// </summary>
         /// <param name="deviceName">Device name (e.g., "\\\\.\\DISPLAY1")</param>
         /// <returns>The Screen object if found, otherwise null</returns>
-        private System.Windows.Forms.Screen GetMonitorByDeviceName(string deviceName)
-        {
-            if (string.IsNullOrEmpty(deviceName))
-                return null;
-
-            return System.Windows.Forms.Screen.AllScreens.FirstOrDefault(s => s.DeviceName == deviceName);
-        }
-
-        /// <summary>
-        /// Gets the monitor that currently contains the window
-        /// </summary>
-        /// <returns>The Screen object containing the window</returns>
-        private System.Windows.Forms.Screen GetCurrentMonitor()
-        {
-            WindowInteropHelper windowInteropHelper = new WindowInteropHelper(this);
-            System.Windows.Forms.Screen screen = System.Windows.Forms.Screen.FromHandle(windowInteropHelper.Handle);
-            return screen;
-        }
-
-        /// <summary>
-        /// Gets the DPI scaling factors for the current window
-        /// </summary>
-        /// <param name="dpiScaleX">Horizontal DPI scale where 1.0 = 100%, 1.25 = 125%, etc.</param>
-        /// <param name="dpiScaleY">Vertical DPI scale where 1.0 = 100%, 1.25 = 125%, etc.</param>
-        private void GetDpiScale(out double dpiScaleX, out double dpiScaleY)
-        {
-            PresentationSource source = PresentationSource.FromVisual(this);
-            if (source?.CompositionTarget != null)
-            {
-                dpiScaleX = source.CompositionTarget.TransformToDevice.M11;
-                dpiScaleY = source.CompositionTarget.TransformToDevice.M22;
-            }
-            else
-            {
-                dpiScaleX = 1.0; // Fallback to 100% scaling if source not available
-                dpiScaleY = 1.0;
-            }
-        }
 
         /// <summary>
         /// Cycles to the next available monitor while preserving the current corner position
         /// </summary>
         private void CycleToNextMonitor()
         {
-            System.Windows.Forms.Screen[] allScreens = System.Windows.Forms.Screen.AllScreens;
-
-            // If only one monitor, nothing to cycle
-            if (allScreens.Length <= 1)
-                return;
-
-            // Find current monitor index
-            int currentIndex = -1;
-            for (int i = 0; i < allScreens.Length; i++)
-            {
-                if (allScreens[i].DeviceName == currentMonitor.DeviceName)
-                {
-                    currentIndex = i;
-                    break;
-                }
-            }
-
-            // Move to next monitor (wrap around to first if at end)
-            int nextIndex = (currentIndex + 1) % allScreens.Length;
-            currentMonitor = allScreens[nextIndex];
+            currentMonitor = monitorManager.CycleToNextMonitor(currentMonitor);
 
             // Re-dock to the same corner on the new monitor
             DockToCorner(currentCorner);
@@ -660,88 +512,19 @@ namespace FloatingClock
 
         private void SaveCornerToSettings()
         {
-            try
-            {
-                iniData["window"]["fixed_corner"] = ((int)currentCorner).ToString();
-                iniData["window"]["fixed"] = fixedPosition ? "1" : "0";
-                iniData["window"]["monitor"] = currentMonitor?.DeviceName ?? "";
-                var parser = new FileIniDataParser();
-                parser.WriteFile("settings.ini", iniData);
-            }
-            catch (Exception ex)
-            {
-                // Silently fail to avoid disrupting user experience
-                Debug.WriteLine($"Failed to save corner setting: {ex.Message}");
-            }
+            settingsManager.SaveCornerSetting((int)currentCorner, currentMonitor?.DeviceName ?? "");
+            iniData = settingsManager.Data; // Keep local copy in sync
         }
 
         private void SaveWindowState()
         {
-            try
-            {
-                // Update current monitor before saving
-                currentMonitor = GetCurrentMonitor();
+            // Update current monitor before saving
+            currentMonitor = monitorManager.GetCurrentMonitor(this);
 
-                // Save current window position (convert WPF coordinates to INI format)
-                int xWindow = (int)this.Left;
-                int yWindow = (int)(SystemParameters.FullPrimaryScreenHeight - this.Top);
-
-                iniData["window"]["x"] = xWindow.ToString();
-                iniData["window"]["y"] = yWindow.ToString();
-                iniData["window"]["fixed"] = fixedPosition ? "1" : "0";
-                iniData["window"]["fixed_corner"] = ((int)currentCorner).ToString();
-                iniData["window"]["monitor"] = currentMonitor?.DeviceName ?? "";
-
-                var parser = new FileIniDataParser();
-                parser.WriteFile("settings.ini", iniData);
-            }
-            catch (Exception ex)
-            {
-                // Silently fail to avoid disrupting user experience
-                Debug.WriteLine($"Failed to save window state: {ex.Message}");
-            }
+            settingsManager.SaveWindowState(this.Left, this.Top, this.Width, this.Height, fixedPosition);
+            iniData = settingsManager.Data; // Keep local copy in sync
         }
 
-        /// <summary>
-        /// Validates and adjusts window position to ensure it stays within the work area
-        /// Useful when screen resolution changes between sessions
-        /// </summary>
-        private void ValidateAndAdjustPosition(ref double left, ref double top, double windowWidth, double windowHeight)
-        {
-            // Ensure we have a valid monitor
-            if (currentMonitor == null)
-            {
-                currentMonitor = System.Windows.Forms.Screen.AllScreens.FirstOrDefault() ?? System.Windows.Forms.Screen.PrimaryScreen;
-            }
-
-            // Get DPI scaling to convert from physical pixels to DIPs
-            double dpiScaleX, dpiScaleY;
-            GetDpiScale(out dpiScaleX, out dpiScaleY);
-
-            // Get current monitor's work area (respects taskbar)
-            // Convert from physical pixels (Screen API) to device-independent pixels (WPF)
-            double workAreaLeft = currentMonitor.WorkingArea.X / dpiScaleX;
-            double workAreaTop = currentMonitor.WorkingArea.Y / dpiScaleY;
-            double workAreaWidth = currentMonitor.WorkingArea.Width / dpiScaleX;
-            double workAreaHeight = currentMonitor.WorkingArea.Height / dpiScaleY;
-
-            // Ensure window stays within work area
-            // Left edge: clamp to work area left
-            if (left < workAreaLeft)
-                left = workAreaLeft;
-
-            // Right edge: ensure window doesn't go off right side
-            if (left + windowWidth > workAreaLeft + workAreaWidth)
-                left = workAreaLeft + workAreaWidth - windowWidth;
-
-            // Top edge: clamp to work area top
-            if (top < workAreaTop)
-                top = workAreaTop;
-
-            // Bottom edge: ensure window doesn't go off bottom
-            if (top + windowHeight > workAreaTop + workAreaHeight)
-                top = workAreaTop + workAreaHeight - windowHeight;
-        }
 
         private void Window_Activated(object sender, EventArgs e)
         {
@@ -826,17 +609,17 @@ namespace FloatingClock
                 // Cycle to next corner: 1->2->3->4->1
                 currentCorner = (Corner)(((int)currentCorner % 4) + 1);
                 fixedPosition = true;
-                currentMonitor = GetCurrentMonitor();
+                currentMonitor = monitorManager.GetCurrentMonitor(this);
                 DockToCorner(currentCorner);
                 SaveCornerToSettings();
             }
             else if (e.Key == Key.I)
             {
                 // Show window and monitor information
-                currentMonitor = GetCurrentMonitor();
+                currentMonitor = monitorManager.GetCurrentMonitor(this);
 
                 double dpiScaleX, dpiScaleY;
-                GetDpiScale(out dpiScaleX, out dpiScaleY);
+                monitorManager.GetDpiScale(this, out dpiScaleX, out dpiScaleY);
                 TaskbarInfo.TaskbarPosition taskbarPosition = TaskbarInfo.GetTaskbarPosition();
                 bool isAutoHide = TaskbarInfo.IsTaskbarAutoHide();
 
@@ -868,8 +651,8 @@ namespace FloatingClock
                 double newTop = this.Top;
 
                 // Update current monitor and validate position stays within bounds
-                currentMonitor = GetCurrentMonitor();
-                ValidateAndAdjustPosition(ref newLeft, ref newTop, this.Width, this.Height);
+                currentMonitor = monitorManager.GetCurrentMonitor(this);
+                positionManager.ValidateAndAdjustPosition(ref newLeft, ref newTop, this.Width, this.Height, currentMonitor, this);
 
                 this.Left = newLeft;
             }
@@ -880,8 +663,8 @@ namespace FloatingClock
                 double newTop = this.Top;
 
                 // Update current monitor and validate position stays within bounds
-                currentMonitor = GetCurrentMonitor();
-                ValidateAndAdjustPosition(ref newLeft, ref newTop, this.Width, this.Height);
+                currentMonitor = monitorManager.GetCurrentMonitor(this);
+                positionManager.ValidateAndAdjustPosition(ref newLeft, ref newTop, this.Width, this.Height, currentMonitor, this);
 
                 this.Left = newLeft;
             }
@@ -892,8 +675,8 @@ namespace FloatingClock
                 double newTop = this.Top - speed;
 
                 // Update current monitor and validate position stays within bounds
-                currentMonitor = GetCurrentMonitor();
-                ValidateAndAdjustPosition(ref newLeft, ref newTop, this.Width, this.Height);
+                currentMonitor = monitorManager.GetCurrentMonitor(this);
+                positionManager.ValidateAndAdjustPosition(ref newLeft, ref newTop, this.Width, this.Height, currentMonitor, this);
 
                 this.Top = newTop;
             }
@@ -904,8 +687,8 @@ namespace FloatingClock
                 double newTop = this.Top + speed;
 
                 // Update current monitor and validate position stays within bounds
-                currentMonitor = GetCurrentMonitor();
-                ValidateAndAdjustPosition(ref newLeft, ref newTop, this.Width, this.Height);
+                currentMonitor = monitorManager.GetCurrentMonitor(this);
+                positionManager.ValidateAndAdjustPosition(ref newLeft, ref newTop, this.Width, this.Height, currentMonitor, this);
 
                 this.Top = newTop;
             }
@@ -958,7 +741,7 @@ namespace FloatingClock
             {
                 // Check if current monitor still exists
                 string currentDeviceName = currentMonitor.DeviceName;
-                currentMonitor = GetMonitorByDeviceName(currentDeviceName);
+                currentMonitor = monitorManager.GetMonitorByDeviceName(currentDeviceName);
 
                 // If monitor no longer exists, fall back to first available
                 if (currentMonitor == null)
@@ -993,7 +776,7 @@ namespace FloatingClock
 
             // Get DPI scaling to convert from physical pixels to DIPs
             double dpiScaleX, dpiScaleY;
-            GetDpiScale(out dpiScaleX, out dpiScaleY);
+            monitorManager.GetDpiScale(this, out dpiScaleX, out dpiScaleY);
 
             // Use WorkingArea to respect taskbar position on the current monitor
             // Convert from physical pixels (Screen API) to device-independent pixels (WPF)
