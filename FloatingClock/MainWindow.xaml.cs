@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
+using FloatingClock.Config;
 using FloatingClock.Managers;
 
 namespace FloatingClock
@@ -68,6 +69,10 @@ namespace FloatingClock
         private MonitorManager monitorManager;
         private SettingsManager settingsManager;
         private WindowPositionManager positionManager;
+        private TrayManager trayManager;
+
+        // WndProc hook for theme change detection
+        private HwndSource _hwndSource;
 
         public MainWindow()
         {
@@ -87,7 +92,7 @@ namespace FloatingClock
             // instantiate and initialize the clock timer
             timer = new DispatcherTimer
             {
-                Interval = System.TimeSpan.FromMilliseconds(100)
+                Interval = System.TimeSpan.FromMilliseconds(Constants.ClockTickInterval)
             };
             timer.Tick += new System.EventHandler(Clock_Tick);
             timer.Start();
@@ -294,7 +299,7 @@ namespace FloatingClock
 
                 timerBackground = new DispatcherTimer
                 {
-                    Interval = System.TimeSpan.FromMilliseconds(100)
+                    Interval = System.TimeSpan.FromMilliseconds(Constants.BackgroundTickInterval)
                 };
                 timerBackground.Tick += new System.EventHandler(Background_Tick);
                 timerBackground.Start();
@@ -478,15 +483,15 @@ namespace FloatingClock
             APPBARDATA abd = new APPBARDATA();
             abd.cbSize = Marshal.SizeOf(typeof(APPBARDATA));
 
-            IntPtr currentState = SHAppBarMessage(ABM_GETSTATE, ref abd);
+            IntPtr currentState = SHAppBarMessage(Constants.ABM_GETSTATE, ref abd);
             int state = currentState.ToInt32();
 
             // Toggle autohide state
-            bool isCurrentlyAutoHidden = (state & ABS_AUTOHIDE) != 0;
+            bool isCurrentlyAutoHidden = (state & Constants.ABS_AUTOHIDE) != 0;
 
             // Set new state (toggle autohide, preserve always-on-top)
-            abd.lParam = isCurrentlyAutoHidden ? new IntPtr(state & ~ABS_AUTOHIDE) : new IntPtr(state | ABS_AUTOHIDE);
-            SHAppBarMessage(ABM_SETSTATE, ref abd);
+            abd.lParam = isCurrentlyAutoHidden ? new IntPtr(state & ~Constants.ABS_AUTOHIDE) : new IntPtr(state | Constants.ABS_AUTOHIDE);
+            SHAppBarMessage(Constants.ABM_SETSTATE, ref abd);
 
             // Update tracking flag
             isTaskbarHidden = !isCurrentlyAutoHidden;
@@ -538,10 +543,10 @@ namespace FloatingClock
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            int speed = 100;
+            int speed = Constants.KeyboardMoveSpeed;
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
             {
-                speed = 10;
+                speed = Constants.KeyboardMoveSpeedSlow;
             }
             if (e.Key == Key.S)
             {
@@ -704,6 +709,17 @@ namespace FloatingClock
         {
             // Save current window state (position and fixed flag) when closing
             SaveWindowState();
+
+            // Stop timers
+            timer?.Stop();
+            timerBackground?.Stop();
+
+            // Remove WndProc hook
+            _hwndSource?.RemoveHook(WndProc);
+
+            // Dispose tray manager
+            trayManager?.Dispose();
+            trayManager = null;
         }
 
         /// <summary>
@@ -715,23 +731,53 @@ namespace FloatingClock
         private void FloatingClockWindow_Loaded(object sender, RoutedEventArgs e)
         {
             WindowInteropHelper wndHelper = new WindowInteropHelper(this);
-            
+
             //int exStyle = (int)GetWindowLong(wndHelper.Handle, (int)GetWindowLongFields.GWL_EXSTYLE);
             //exStyle |= (int)ExtendedWindowStyles.WS_EX_TOOLWINDOW;
             //SetWindowLong(wndHelper.Handle, (int)GetWindowLongFields.GWL_EXSTYLE, (IntPtr)exStyle);
             LoadSettings();
 
-            // position window at the bottom right of the screen
-            //this.Left = SystemParameters.WorkArea.Width - this.Width;
-            //this.Top = SystemParameters.WorkArea.Height - this.Height;
+            // Set up WndProc hook for theme change detection
+            _hwndSource = HwndSource.FromHwnd(wndHelper.Handle);
+            _hwndSource?.AddHook(WndProc);
 
-            //this.Left = SystemParameters.VirtualScreenWidth - this.Width;
-            //this.Top = SystemParameters.VirtualScreenHeight - this.Height;
+            // Initialize system tray icon
+            InitializeTrayIcon();
 
             // Initialize WorkArea and taskbar tracking for change detection
             previousWorkArea = SystemParameters.WorkArea;
             previousTaskbarPosition = TaskbarInfo.GetTaskbarPosition();
             AdjustWindowPosition();
+        }
+
+        /// <summary>
+        /// Initializes the system tray icon with theme-aware icon
+        /// </summary>
+        private void InitializeTrayIcon()
+        {
+            var icon = ThemeHelper.GetThemeAppropriateIcon();
+            trayManager = new TrayManager(icon);
+            trayManager.ShowRequested += (s, args) =>
+            {
+                this.Show();
+                this.WindowState = WindowState.Normal;
+                this.Activate();
+            };
+            trayManager.SettingsRequested += (s, args) => ShowSettingsWindow();
+            trayManager.ExitRequested += (s, args) => this.Close();
+        }
+
+        /// <summary>
+        /// Windows message handler for detecting theme changes
+        /// </summary>
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (msg == Constants.WM_SETTINGCHANGE)
+            {
+                // Update tray icon when Windows theme changes
+                trayManager?.UpdateIcon(ThemeHelper.GetThemeAppropriateIcon());
+            }
+            return IntPtr.Zero;
         }
 
         private void SystemEvents_DisplaySettingsChanged(object sender, EventArgs e)
@@ -812,20 +858,20 @@ namespace FloatingClock
                 switch (corner)
                 {
                     case Corner.TopLeft:
-                        targetLeft = workAreaLeft + 10;
-                        targetTop = workAreaTop + 10;
+                        targetLeft = workAreaLeft + Constants.CornerMargin;
+                        targetTop = workAreaTop + Constants.CornerMargin;
                         break;
                     case Corner.TopRight:
-                        targetLeft = workAreaLeft + workAreaWidth - windowWidth - 10;
-                        targetTop = workAreaTop + 10;
+                        targetLeft = workAreaLeft + workAreaWidth - windowWidth - Constants.CornerMargin;
+                        targetTop = workAreaTop + Constants.CornerMargin;
                         break;
                     case Corner.BottomLeft:
-                        targetLeft = workAreaLeft + 10;
-                        targetTop = workAreaTop + workAreaHeight - windowHeight - 20;
+                        targetLeft = workAreaLeft + Constants.CornerMargin;
+                        targetTop = workAreaTop + workAreaHeight - windowHeight - Constants.BottomExtraMargin;
                         break;
                     case Corner.BottomRight:
-                        targetLeft = workAreaLeft + workAreaWidth - windowWidth - 10;
-                        targetTop = workAreaTop + workAreaHeight - windowHeight - 20;
+                        targetLeft = workAreaLeft + workAreaWidth - windowWidth - Constants.CornerMargin;
+                        targetTop = workAreaTop + workAreaHeight - windowHeight - Constants.BottomExtraMargin;
                         break;
                 }
 
@@ -857,24 +903,24 @@ namespace FloatingClock
             switch (corner)
             {
                 case Corner.TopLeft:
-                    this.Left = workAreaLeft + 10;
+                    this.Left = workAreaLeft + Constants.CornerMargin;
                     // WorkArea.Top is already 0 when no top taskbar, offset when taskbar at top
-                    this.Top = workAreaTop + 10;
+                    this.Top = workAreaTop + Constants.CornerMargin;
                     break;
                 case Corner.TopRight:
-                    this.Left = workAreaLeft + workAreaWidth - windowWidth - 10;
+                    this.Left = workAreaLeft + workAreaWidth - windowWidth - Constants.CornerMargin;
                     // WorkArea.Top is already 0 when no top taskbar, offset when taskbar at top
-                    this.Top = workAreaTop + 10;
+                    this.Top = workAreaTop + Constants.CornerMargin;
                     break;
                 case Corner.BottomLeft:
-                    this.Left = workAreaLeft + 10;
-                    // Position above bottom edge/taskbar with -20 margin (negative = up from bottom)
-                    this.Top = workAreaTop + workAreaHeight - windowHeight - 20;
+                    this.Left = workAreaLeft + Constants.CornerMargin;
+                    // Position above bottom edge/taskbar with extra margin (up from bottom)
+                    this.Top = workAreaTop + workAreaHeight - windowHeight - Constants.BottomExtraMargin;
                     break;
                 case Corner.BottomRight:
-                    this.Left = workAreaLeft + workAreaWidth - windowWidth - 10;
-                    // Position above bottom edge/taskbar with -20 margin (negative = up from bottom)
-                    this.Top = workAreaTop + workAreaHeight - windowHeight - 20;
+                    this.Left = workAreaLeft + workAreaWidth - windowWidth - Constants.CornerMargin;
+                    // Position above bottom edge/taskbar with extra margin (up from bottom)
+                    this.Top = workAreaTop + workAreaHeight - windowHeight - Constants.BottomExtraMargin;
                     break;
             }
         }
@@ -1040,14 +1086,7 @@ namespace FloatingClock
             public int bottom;
         }
 
-        // AppBar message constants
-        private const int ABM_GETSTATE = 0x4;
-        private const int ABM_SETSTATE = 0xA;
-
-        // AppBar state constants
-        private const int ABS_AUTOHIDE = 0x1;
-        private const int ABS_ALWAYSONTOP = 0x2;
-
+        
         /// <summary>
         /// Simple conversion from IntPtr to a int
         /// </summary>

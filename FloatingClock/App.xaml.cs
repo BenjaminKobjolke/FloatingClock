@@ -9,6 +9,8 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using FloatingClock.Config;
+using FloatingClock.Managers;
 
 namespace FloatingClock
 {
@@ -33,8 +35,7 @@ namespace FloatingClock
         [DllImport("user32.dll")]
         private static extern bool IsIconic(IntPtr hWnd);
 
-        private const int SW_RESTORE = 9;
-
+        
         /// <summary>
         /// Logs debug information to help diagnose mutex issues.
         /// Logs are written to %LOCALAPPDATA%\FloatingClock\debug.log
@@ -45,8 +46,7 @@ namespace FloatingClock
             {
                 string logPath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "FloatingClock",
-                    "debug.log"
+                    Constants.DebugLogSubPath
                 );
                 Directory.CreateDirectory(Path.GetDirectoryName(logPath));
 
@@ -69,7 +69,7 @@ namespace FloatingClock
             {
                 // Create a named mutex to ensure single instance
                 bool createdNew;
-                _instanceMutex = new Mutex(true, "FloatingClockSingleInstance", out createdNew);
+                _instanceMutex = new Mutex(true, Constants.AppMutexName, out createdNew);
 
                 if (!createdNew)
                 {
@@ -85,13 +85,13 @@ namespace FloatingClock
                             LogDebug("Another instance is running (could not acquire mutex)");
 
                             MessageBox.Show(
-                                "FloatingClock is already running.",
-                                "FloatingClock",
+                                LocalizationManager.Lang("app.already_running"),
+                                Constants.AppName,
                                 MessageBoxButton.OK,
                                 MessageBoxImage.Information);
 
                             // Find the existing window and bring it to the foreground
-                            IntPtr existingWindow = FindWindow(null, "Floating Clock");
+                            IntPtr existingWindow = FindWindow(null, Constants.AppName);
                             if (existingWindow != IntPtr.Zero)
                             {
                                 LogDebug("Found existing window, bringing to foreground");
@@ -99,7 +99,7 @@ namespace FloatingClock
                                 // If window is minimized, restore it
                                 if (IsIconic(existingWindow))
                                 {
-                                    ShowWindow(existingWindow, SW_RESTORE);
+                                    ShowWindow(existingWindow, Constants.SW_RESTORE);
                                 }
 
                                 // Bring window to foreground
@@ -141,7 +141,7 @@ namespace FloatingClock
                 // If we can't determine mutex state, show error and allow startup
                 MessageBox.Show(
                     $"Error checking for existing instance: {ex.Message}\n\nProceeding with startup.",
-                    "FloatingClock",
+                    Constants.AppName,
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
 

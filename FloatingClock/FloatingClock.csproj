@@ -8,7 +8,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>FloatingClock</RootNamespace>
     <AssemblyName>FloatingClock</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
@@ -64,9 +64,13 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="CommandItem.cs" />
+    <Compile Include="Config\Constants.cs" />
+    <Compile Include="Managers\LocalizationManager.cs" />
     <Compile Include="Managers\MonitorManager.cs" />
     <Compile Include="Managers\SettingsManager.cs" />
+    <Compile Include="Managers\TrayManager.cs" />
     <Compile Include="Managers\WindowPositionManager.cs" />
+    <Compile Include="ThemeHelper.cs" />
     <Compile Include="ScreenCaptureHelper.cs" />
     <Compile Include="TaskbarInfo.cs" />
     <Page Include="CommandPaletteWindow.xaml">
@@ -130,6 +134,14 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="lang\en.json">
+      <LogicalName>FloatingClock.lang.en.json</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="lang\languages.json">
+      <LogicalName>FloatingClock.lang.languages.json</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+    <ItemGroup>
     <Resource Include="Resources\Images\clock.png" />
   </ItemGroup>
   <ItemGroup>
