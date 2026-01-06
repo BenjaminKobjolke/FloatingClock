@@ -51,5 +51,8 @@ namespace FloatingClock.Config
 
         // Window restore constant
         public const int SW_RESTORE = 9;
+
+        // External URLs
+        public const string MoreToolsUrl = "https://www.workflow-tools.com/floating-clock/app-link";
     }
 }

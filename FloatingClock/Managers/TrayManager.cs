@@ -1,6 +1,8 @@
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
+using FloatingClock.Config;
 
 namespace FloatingClock.Managers
 {
@@ -51,6 +53,11 @@ namespace FloatingClock.Managers
             var settingsItem = new ToolStripMenuItem(LocalizationManager.Lang("tray.settings"));
             settingsItem.Click += (s, e) => SettingsRequested?.Invoke(this, EventArgs.Empty);
             _contextMenu.Items.Add(settingsItem);
+
+            // More Tools menu item
+            var moreToolsItem = new ToolStripMenuItem(LocalizationManager.Lang("tray.more_tools"));
+            moreToolsItem.Click += (s, e) => Process.Start(Constants.MoreToolsUrl);
+            _contextMenu.Items.Add(moreToolsItem);
 
             _contextMenu.Items.Add(new ToolStripSeparator());
 
