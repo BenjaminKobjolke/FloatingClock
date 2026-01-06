@@ -1,90 +1,23 @@
 @echo off
-REM Build FloatingClock in Release configuration
-
-echo ========================================
-echo Building FloatingClock (Release)
-echo ========================================
-echo.
-
-REM Change to solution directory
+echo Building FloatingClock Release...
 cd /d "%~dp0.."
 
-REM Find MSBuild by checking common installation paths
-set "MSBUILD_PATH="
-
-REM Check for Visual Studio 2022
-if exist "%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" (
-    set "MSBUILD_PATH=%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
-    goto :found
-)
-if exist "%ProgramFiles%\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe" (
-    set "MSBUILD_PATH=%ProgramFiles%\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe"
-    goto :found
-)
-if exist "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe" (
-    set "MSBUILD_PATH=%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
-    goto :found
-)
-
-REM Check for Visual Studio 2019
-if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe" (
-    set "MSBUILD_PATH=%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
-    goto :found
-)
-if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Professional\MSBuild\Current\Bin\MSBuild.exe" (
-    set "MSBUILD_PATH=%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Professional\MSBuild\Current\Bin\MSBuild.exe"
-    goto :found
-)
-if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe" (
-    set "MSBUILD_PATH=%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
-    goto :found
-)
-
-REM Check for older MSBuild
-if exist "%ProgramFiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe" (
-    set "MSBUILD_PATH=%ProgramFiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe"
-    goto :found
-)
-
-REM MSBuild not found
-echo ERROR: MSBuild not found!
-echo Please install Visual Studio or Visual Studio Build Tools.
-exit /b 1
-
-:found
-echo Using MSBuild: %MSBUILD_PATH%
-echo.
-
 REM Restore NuGet packages
-echo Restoring NuGet packages...
-"%MSBUILD_PATH%" FloatingClock.sln /t:Restore /p:Configuration=Release
+nuget restore FloatingClock.sln
 if errorlevel 1 (
-    echo.
-    echo ERROR: NuGet restore failed!
+    echo NuGet restore failed
+    pause
     exit /b 1
 )
-echo.
 
 REM Build the solution
-echo Building solution...
-"%MSBUILD_PATH%" FloatingClock.sln /p:Configuration=Release /p:Platform="Any CPU" /verbosity:minimal
+"C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" FloatingClock.sln /p:Configuration=Release /p:Platform="Any CPU" /t:Rebuild
 if errorlevel 1 (
-    echo.
-    echo ========================================
-    echo BUILD FAILED!
-    echo ========================================
+    echo Build failed
+    pause
     exit /b 1
 )
 
 echo.
-echo ========================================
-echo BUILD SUCCESSFUL!
-echo ========================================
-echo.
-echo Output: FloatingClock\bin\Release\FloatingClock.exe
-echo.
-
-REM Return to the tools directory
-cd /d "%~dp0"
-
-exit /b 0
+echo Build complete. Output: FloatingClock\bin\Release\FloatingClock.exe
+pause
