@@ -429,6 +429,12 @@ namespace FloatingClock
         {
             try
             {
+                // Tell main window not to save state on close (we already saved settings)
+                if (Owner is MainWindow mainWindow)
+                {
+                    mainWindow.SetSkipSaveOnClose();
+                }
+
                 // Get the current exe path
                 string exePath = Process.GetCurrentProcess().MainModule.FileName;
 

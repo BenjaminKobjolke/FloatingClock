@@ -65,6 +65,10 @@ namespace FloatingClock
 
         private bool isTaskbarHidden = false;
 
+        private bool isSystemClockHidden = false;
+
+        private bool skipSaveOnClose = false;
+
         // Managers for separation of concerns
         private MonitorManager monitorManager;
         private SettingsManager settingsManager;
@@ -141,10 +145,24 @@ namespace FloatingClock
             }
 
             // Set window size first (needed for position validation)
-            int widthWindow = Convert.ToInt32(iniData["window"]["width"]);
-            int heightWindow = Convert.ToInt32(iniData["window"]["height"]);
-            this.Width = widthWindow;
-            this.Height = heightWindow;
+            string widthStr = iniData["window"]["width"];
+            string heightStr = iniData["window"]["height"];
+            int parsedWidth = 0;
+            int parsedHeight = 0;
+            int.TryParse(widthStr?.Trim(), out parsedWidth);
+            int.TryParse(heightStr?.Trim(), out parsedHeight);
+
+            if (parsedWidth > 0 && parsedHeight > 0)
+            {
+                // Use Dispatcher with low priority to set size after all layout is complete
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    this.Width = parsedWidth;
+                    this.Height = parsedHeight;
+                    // Re-adjust position after size change to fix corner docking
+                    AdjustWindowPosition();
+                }), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            }
 
             // Load and validate monitor setting
             string monitorDeviceName = iniData["window"]["monitor"];
@@ -472,6 +490,14 @@ namespace FloatingClock
                 isTaskbarHidden
             ));
 
+            // Toggle system clock visibility
+            commands.Add(new CommandItem(
+                "Hide System Clock",
+                "C",
+                () => { ToggleSystemClockVisibility(); },
+                isSystemClockHidden
+            ));
+
             // Exit application
             commands.Add(new CommandItem(
                 "Exit Application",
@@ -507,6 +533,88 @@ namespace FloatingClock
         }
 
         /// <summary>
+        /// Toggles the Windows system clock visibility via registry
+        /// </summary>
+        private void ToggleSystemClockVisibility()
+        {
+            // Show confirmation dialog before restarting Explorer
+            var result = MessageBox.Show(
+                "Hiding/showing the system clock requires restarting Windows Explorer. This will briefly interrupt your desktop. Continue?",
+                "Restart Explorer",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result != MessageBoxResult.Yes)
+                return;
+
+            try
+            {
+                using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                    @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", true))
+                {
+                    if (key != null)
+                    {
+                        // ShowSystrayDateTimeValueName: 0 = clock hidden, 1 = clock visible
+                        int currentValue = (int)(key.GetValue("ShowSystrayDateTimeValueName", 0) ?? 0);
+                        int newValue = currentValue == 0 ? 1 : 0;
+                        key.SetValue("ShowSystrayDateTimeValueName", newValue, Microsoft.Win32.RegistryValueKind.DWord);
+                        isSystemClockHidden = (newValue == 0);
+                    }
+                }
+
+                // Restart Explorer to apply the change
+                RestartExplorer();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to toggle system clock: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Restarts Windows Explorer to apply system tray changes
+        /// </summary>
+        private void RestartExplorer()
+        {
+            try
+            {
+                foreach (var process in System.Diagnostics.Process.GetProcessesByName("explorer"))
+                {
+                    process.Kill();
+                }
+                System.Diagnostics.Process.Start("explorer.exe");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to restart Explorer: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Reads the current system clock visibility state from registry
+        /// </summary>
+        private void InitializeSystemClockState()
+        {
+            try
+            {
+                using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                    @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", false))
+                {
+                    if (key != null)
+                    {
+                        // ShowSystrayDateTimeValueName: 0 = clock hidden, 1 = clock visible
+                        int currentValue = (int)(key.GetValue("ShowSystrayDateTimeValueName", 0) ?? 0);
+                        isSystemClockHidden = (currentValue == 0);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to read system clock state: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Shows the settings editor window
         /// </summary>
         private void ShowSettingsWindow()
@@ -528,6 +636,14 @@ namespace FloatingClock
         {
             settingsManager.SaveCornerSetting((int)currentCorner, currentMonitor?.DeviceName ?? "");
             iniData = settingsManager.Data; // Keep local copy in sync
+        }
+
+        /// <summary>
+        /// Sets flag to skip saving window state on close (used when restarting from settings)
+        /// </summary>
+        public void SetSkipSaveOnClose()
+        {
+            skipSaveOnClose = true;
         }
 
         private void SaveWindowState()
@@ -583,6 +699,11 @@ namespace FloatingClock
             {
                 // Toggle taskbar visibility
                 ToggleTaskbarVisibility();
+            }
+            else if (e.Key == Key.C)
+            {
+                // Toggle system clock visibility
+                ToggleSystemClockVisibility();
             }
             else if (e.Key == Key.D1 || e.Key == Key.NumPad1)
             {
@@ -717,7 +838,11 @@ namespace FloatingClock
         private void FloatingClockWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             // Save current window state (position and fixed flag) when closing
-            SaveWindowState();
+            // Skip if restarting from settings (settings already saved new values)
+            if (!skipSaveOnClose)
+            {
+                SaveWindowState();
+            }
 
             // Stop timers
             timer?.Stop();
@@ -745,6 +870,9 @@ namespace FloatingClock
             //exStyle |= (int)ExtendedWindowStyles.WS_EX_TOOLWINDOW;
             //SetWindowLong(wndHelper.Handle, (int)GetWindowLongFields.GWL_EXSTYLE, (IntPtr)exStyle);
             LoadSettings();
+
+            // Initialize system clock state from registry
+            InitializeSystemClockState();
 
             // Set up WndProc hook for theme change detection
             _hwndSource = HwndSource.FromHwnd(wndHelper.Handle);

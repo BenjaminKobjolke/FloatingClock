@@ -79,7 +79,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="60"/>
                     </Grid.ColumnDefinitions>
-                    <Slider x:Name="WindowHeightSlider" Minimum="50" Maximum="400" TickFrequency="10" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged"/>
+                    <Slider x:Name="WindowHeightSlider" Minimum="50" Maximum="800" TickFrequency="10" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged"/>
                     <TextBox x:Name="WindowHeightTextBox" Grid.Column="1" Margin="10,0,0,0" TextAlignment="Center" VerticalContentAlignment="Center"/>
                 </Grid>
 
