@@ -163,6 +163,23 @@ namespace FloatingClock
             LogDebug("Main window created and shown");
         }
 
+        /// <summary>
+        /// Releases the mutex before restarting to prevent "already running" error
+        /// </summary>
+        public static void ReleaseMutexForRestart()
+        {
+            if (_instanceMutex != null)
+            {
+                try
+                {
+                    _instanceMutex.ReleaseMutex();
+                    _instanceMutex.Dispose();
+                    _instanceMutex = null;
+                }
+                catch { }
+            }
+        }
+
         protected override void OnExit(ExitEventArgs e)
         {
             LogDebug("Application exiting");

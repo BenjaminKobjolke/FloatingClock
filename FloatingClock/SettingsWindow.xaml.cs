@@ -438,6 +438,9 @@ namespace FloatingClock
                 // Get the current exe path
                 string exePath = Process.GetCurrentProcess().MainModule.FileName;
 
+                // Release mutex BEFORE starting new instance to prevent "already running" error
+                App.ReleaseMutexForRestart();
+
                 // Start a new instance
                 Process.Start(exePath);
 
