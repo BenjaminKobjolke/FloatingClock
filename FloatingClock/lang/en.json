@@ -1,0 +1,37 @@
+{
+  "_meta_": {
+    "language_name": "English"
+  },
+  "app": {
+    "title": "Floating Clock",
+    "already_running": "FloatingClock is already running."
+  },
+  "commands": {
+    "hide_seconds": "Hide Seconds",
+    "show_seconds": "Show Seconds",
+    "free_position_mode": "Free Position Mode",
+    "move_with_arrows": "Move with Arrow Keys",
+    "dock_top_left": "Dock to Top-Left",
+    "dock_top_right": "Dock to Top-Right",
+    "dock_bottom_left": "Dock to Bottom-Left",
+    "dock_bottom_right": "Dock to Bottom-Right",
+    "cycle_monitor": "Cycle to Next Monitor",
+    "cycle_monitor_single": "Cycle to Next Monitor (only 1 available)",
+    "cycle_corner": "Cycle to Next Corner",
+    "open_settings": "Open Settings",
+    "hide_taskbar": "Hide Windows Taskbar",
+    "exit": "Exit Application"
+  },
+  "tray": {
+    "show": "Show",
+    "settings": "Settings",
+    "exit": "Exit"
+  },
+  "errors": {
+    "settings_error": "Settings Error",
+    "settings_open_error": "Error opening settings: :message"
+  },
+  "dialogs": {
+    "window_info_title": "Window Info"
+  }
+}
