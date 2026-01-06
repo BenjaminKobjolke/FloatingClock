@@ -7,6 +7,7 @@
         xmlns:local="clr-namespace:FloatingClock"
         mc:Ignorable="d"
         KeyDown="Window_KeyDown"
+        MouseRightButtonUp="Window_MouseRightButtonUp"
         Title="Floating Clock" Height="88" Width="220" WindowStyle="None" Background="#25000000" ResizeMode="NoResize"
         Left="1700.0" Top="950.0"
         Topmost="True" AllowsTransparency="True" ShowInTaskbar="False" Icon="Resources/Images/clock.png"

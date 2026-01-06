@@ -363,6 +363,15 @@ namespace FloatingClock
         }
 
         /// <summary>
+        /// Handles right-click on the window to open the command palette
+        /// </summary>
+        private void Window_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            ShowCommandPalette();
+            e.Handled = true;
+        }
+
+        /// <summary>
         /// Gets the list of available commands with their current states
         /// </summary>
         private List<CommandItem> GetCommands()
