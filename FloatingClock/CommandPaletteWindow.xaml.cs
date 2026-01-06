@@ -30,6 +30,9 @@ namespace FloatingClock
             // Populate command list
             CommandListBox.ItemsSource = commands;
 
+            // Enable mouse click selection
+            CommandListBox.PreviewMouseLeftButtonUp += CommandListBox_MouseClick;
+
             // Select first item by default
             if (commands.Count > 0)
             {
@@ -270,6 +273,16 @@ namespace FloatingClock
             if (CommandListBox.SelectedItem != null)
             {
                 CommandListBox.ScrollIntoView(CommandListBox.SelectedItem);
+            }
+        }
+
+        private void CommandListBox_MouseClick(object sender, MouseButtonEventArgs e)
+        {
+            // Check if click was on an actual item, not empty space
+            var item = ItemsControl.ContainerFromElement(CommandListBox, e.OriginalSource as DependencyObject);
+            if (item != null)
+            {
+                ExecuteSelectedCommand();
             }
         }
     }
