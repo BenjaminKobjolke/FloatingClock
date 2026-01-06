@@ -39,10 +39,21 @@
 
         <!-- Scrollable settings content -->
         <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Padding="20">
-            <StackPanel>
+            <StackPanel x:Name="MainSettingsPanel">
+
+                <!-- Theme Section -->
+                <TextBlock x:Name="ThemeSectionHeader" Text="Theme" Style="{StaticResource SectionHeader}"/>
+                <Separator x:Name="ThemeSeparator" Margin="0,0,0,10"/>
+
+                <TextBlock x:Name="ThemeModeLabel" Text="Application Theme:" Style="{StaticResource SettingLabel}"/>
+                <ComboBox x:Name="ThemeModeComboBox" Style="{StaticResource SettingControl}" Height="25" SelectionChanged="ThemeMode_Changed">
+                    <ComboBoxItem Content="Auto (follow system)" Tag="auto"/>
+                    <ComboBoxItem Content="Light" Tag="light"/>
+                    <ComboBoxItem Content="Dark" Tag="dark"/>
+                </ComboBox>
 
                 <!-- Font Section -->
-                <TextBlock Text="Font" Style="{StaticResource SectionHeader}"/>
+                <TextBlock x:Name="FontSectionHeader" Text="Font" Style="{StaticResource SectionHeader}"/>
                 <Separator Margin="0,0,0,10"/>
 
                 <TextBlock Text="Font Family:" Style="{StaticResource SettingLabel}"/>
@@ -368,6 +379,13 @@
 
                 <TextBlock Text="Show Icons:" Style="{StaticResource SettingLabel}"/>
                 <CheckBox x:Name="PaletteShowIconsCheckBox" Content="Display ✓ indicators for active commands" Style="{StaticResource SettingControl}" Checked="Setting_Changed" Unchecked="Setting_Changed"/>
+
+                <!-- More Tools Link -->
+                <TextBlock x:Name="MoreToolsTextBlock" Margin="0,15,0,0">
+                    <Hyperlink x:Name="MoreToolsLink" Click="MoreToolsLink_Click">
+                        <Run Text="More tools to improve your workflow"/>
+                    </Hyperlink>
+                </TextBlock>
 
                 <!-- Bottom spacing -->
                 <Border Height="20"/>

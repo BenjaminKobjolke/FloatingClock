@@ -25,7 +25,15 @@
   "tray": {
     "show": "Show",
     "settings": "Settings",
+    "more_tools": "More Tools",
     "exit": "Exit"
+  },
+  "settings": {
+    "theme": "Theme",
+    "theme_auto": "Auto (follow system)",
+    "theme_light": "Light",
+    "theme_dark": "Dark",
+    "more_tools": "More Tools"
   },
   "errors": {
     "settings_error": "Settings Error",

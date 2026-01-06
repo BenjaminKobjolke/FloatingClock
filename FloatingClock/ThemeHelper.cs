@@ -41,5 +41,31 @@ namespace FloatingClock
                 ? Properties.Resources.icon_dark
                 : Properties.Resources.icon_light;
         }
+
+        /// <summary>
+        /// Determines the effective theme based on user preference
+        /// </summary>
+        /// <param name="userPreference">User preference: "auto", "light", or "dark"</param>
+        /// <returns>The effective theme: "light" or "dark"</returns>
+        public static string GetEffectiveTheme(string userPreference)
+        {
+            if (userPreference == "light")
+                return "light";
+            if (userPreference == "dark")
+                return "dark";
+
+            // Auto mode: follow system theme
+            return IsWindowsUsingLightTheme() ? "light" : "dark";
+        }
+
+        /// <summary>
+        /// Determines if dark theme should be used based on user preference
+        /// </summary>
+        /// <param name="userPreference">User preference: "auto", "light", or "dark"</param>
+        /// <returns>True if dark theme should be used</returns>
+        public static bool IsDarkTheme(string userPreference)
+        {
+            return GetEffectiveTheme(userPreference) == "dark";
+        }
     }
 }

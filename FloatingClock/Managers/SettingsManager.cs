@@ -120,6 +120,56 @@ namespace FloatingClock.Managers
         }
 
         /// <summary>
+        /// Loads the theme mode setting from the INI file
+        /// </summary>
+        /// <returns>Theme mode: "auto", "light", or "dark"</returns>
+        public string LoadThemeMode()
+        {
+            try
+            {
+                if (iniData != null && iniData["theme"] != null)
+                {
+                    var mode = iniData["theme"]["mode"];
+                    if (!string.IsNullOrEmpty(mode) && (mode == "auto" || mode == "light" || mode == "dark"))
+                    {
+                        return mode;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading theme mode: {ex.Message}");
+            }
+            return "auto"; // Default to auto
+        }
+
+        /// <summary>
+        /// Saves the theme mode setting to the INI file
+        /// </summary>
+        /// <param name="mode">Theme mode: "auto", "light", or "dark"</param>
+        public void SaveThemeMode(string mode)
+        {
+            try
+            {
+                if (iniData == null)
+                    return;
+
+                // Ensure theme section exists
+                if (iniData["theme"] == null)
+                {
+                    iniData.Sections.AddSection("theme");
+                }
+
+                iniData["theme"]["mode"] = mode;
+                parser.WriteFile(SettingsFilePath, iniData);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to save theme mode: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Helper method to convert a string value to double with culture fallback
         /// </summary>
         public double ConvertToDoubleWithCultureFallback(string value)
@@ -207,6 +257,9 @@ namespace FloatingClock.Managers
             defaults["command_palette"]["padding"] = "10";
             defaults["command_palette"]["item_padding"] = "5";
             defaults["command_palette"]["show_icons"] = "1";
+
+            // Theme section
+            defaults["theme"]["mode"] = "auto";
 
             return defaults;
         }

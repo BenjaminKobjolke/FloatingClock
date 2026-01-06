@@ -6,7 +6,9 @@ using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Media;
+using FloatingClock.Config;
 
 namespace FloatingClock
 {
@@ -124,6 +126,15 @@ namespace FloatingClock
                 UpdateColorPreview(PaletteBackgroundColorTextBox, PaletteBackgroundColorPreview);
                 UpdateColorPreview(PaletteTextColorTextBox, PaletteTextColorPreview);
                 UpdateColorPreview(PaletteSelectedBackgroundTextBox, PaletteSelectedBackgroundPreview);
+
+                // Theme section
+                string themeMode = "auto";
+                if (iniData.Sections.ContainsSection("theme"))
+                {
+                    themeMode = GetValueOrDefault(iniData["theme"]["mode"], "auto");
+                }
+                SetComboBoxByTag(ThemeModeComboBox, themeMode);
+                ApplyTheme(ThemeHelper.IsDarkTheme(themeMode));
             }
             catch (Exception ex)
             {
@@ -390,6 +401,13 @@ namespace FloatingClock
                 iniData["command_palette"]["width"] = Math.Round(PaletteWidthSlider.Value).ToString("F0", CultureInfo.InvariantCulture);
                 iniData["command_palette"]["show_icons"] = PaletteShowIconsCheckBox.IsChecked == true ? "1" : "0";
 
+                // Theme section (ensure section exists)
+                if (!iniData.Sections.ContainsSection("theme"))
+                {
+                    iniData.Sections.AddSection("theme");
+                }
+                iniData["theme"]["mode"] = GetComboBoxTag(ThemeModeComboBox);
+
                 // Write to file
                 var parser = new FileIniDataParser();
                 parser.WriteFile("settings.ini", iniData);
@@ -423,6 +441,111 @@ namespace FloatingClock
             catch (Exception ex)
             {
                 MessageBox.Show($"Error restarting application: {ex.Message}\nPlease restart manually.", "Restart Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ThemeMode_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            if (isLoading) return;
+
+            var selected = GetComboBoxTag(ThemeModeComboBox);
+            if (string.IsNullOrEmpty(selected)) selected = "auto";
+
+            bool isDark = ThemeHelper.IsDarkTheme(selected);
+            ApplyTheme(isDark);
+            hasChanges = true;
+        }
+
+        private void ApplyTheme(bool isDark)
+        {
+            // Define colors - use white for all text in dark mode for better readability
+            Color windowBg = isDark ? Color.FromRgb(45, 45, 45) : Color.FromRgb(240, 240, 240);
+            Color textColor = isDark ? Colors.White : Color.FromRgb(51, 51, 51);
+            Color labelColor = isDark ? Colors.White : Color.FromRgb(85, 85, 85);
+            Color separatorColor = isDark ? Color.FromRgb(68, 68, 68) : Color.FromRgb(204, 204, 204);
+            Color controlBg = isDark ? Color.FromRgb(60, 60, 60) : Colors.White;
+            Color borderColor = isDark ? Color.FromRgb(80, 80, 80) : Color.FromRgb(171, 173, 179);
+            Color buttonBorderColor = isDark ? Color.FromRgb(100, 100, 100) : Color.FromRgb(204, 204, 204);
+            Color linkColor = isDark ? Color.FromRgb(100, 149, 237) : Color.FromRgb(0, 0, 238);
+
+            // Apply window background
+            Background = new SolidColorBrush(windowBg);
+
+            // Apply to all TextBlocks - use white for all text in dark mode
+            ApplyToAllControls<TextBlock>(MainSettingsPanel, tb =>
+            {
+                tb.Foreground = new SolidColorBrush(textColor);
+            });
+
+            // Apply to separators
+            ApplyToAllControls<System.Windows.Controls.Separator>(MainSettingsPanel, sep =>
+            {
+                sep.Background = new SolidColorBrush(separatorColor);
+            });
+
+            // ComboBoxes - keep default light theme styling for readability
+
+            // Apply to TextBoxes
+            ApplyToAllControls<TextBox>(MainSettingsPanel, tb =>
+            {
+                tb.Background = new SolidColorBrush(controlBg);
+                tb.Foreground = new SolidColorBrush(textColor);
+                tb.BorderBrush = new SolidColorBrush(borderColor);
+            });
+
+            // Apply to CheckBoxes
+            ApplyToAllControls<CheckBox>(MainSettingsPanel, cb =>
+            {
+                cb.Foreground = new SolidColorBrush(labelColor);
+            });
+
+            // Apply to Sliders
+            ApplyToAllControls<Slider>(MainSettingsPanel, sl =>
+            {
+                sl.Foreground = new SolidColorBrush(textColor);
+            });
+
+            // Apply to More Tools link
+            MoreToolsLink.Foreground = new SolidColorBrush(linkColor);
+
+            // Apply to bottom button bar
+            var grid = this.Content as Grid;
+            if (grid != null && grid.Children.Count > 1)
+            {
+                var bottomBorder = grid.Children[1] as Border;
+                if (bottomBorder != null)
+                {
+                    bottomBorder.Background = new SolidColorBrush(isDark ? Color.FromRgb(50, 50, 50) : Colors.White);
+                    bottomBorder.BorderBrush = new SolidColorBrush(buttonBorderColor);
+                }
+            }
+        }
+
+        private void ApplyToAllControls<T>(DependencyObject parent, Action<T> action) where T : DependencyObject
+        {
+            if (parent == null) return;
+
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T typedChild)
+                {
+                    action(typedChild);
+                }
+                ApplyToAllControls<T>(child, action);
+            }
+        }
+
+        private void MoreToolsLink_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Process.Start(Constants.MoreToolsUrl);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error opening link: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
