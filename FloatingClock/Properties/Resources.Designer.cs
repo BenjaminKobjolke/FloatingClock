@@ -67,5 +67,29 @@ namespace FloatingClock.Properties
                 resourceCulture = value;
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        internal static System.Drawing.Icon icon_dark
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("icon_dark", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        internal static System.Drawing.Icon icon_light
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("icon_light", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
     }
 }
