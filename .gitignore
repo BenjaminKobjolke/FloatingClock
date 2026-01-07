@@ -62,6 +62,7 @@ artifacts/
 *.tlh
 *.tmp
 *.tmp_proj
+*_*_wpftmp.csproj
 *.log
 *.vspscc
 *.vssscc
