@@ -87,4 +87,6 @@ echo.
 REM Return to the tools directory
 cd /d "%~dp0"
 
+pause
+
 exit /b 0
