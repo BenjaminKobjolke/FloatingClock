@@ -275,6 +275,34 @@ namespace FloatingClock
             hasChanges = true;
         }
 
+        private void DimensionTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (isLoading) return;
+
+            var textBox = sender as TextBox;
+            if (textBox == null) return;
+
+            // Determine which slider to update
+            Slider slider = null;
+            if (textBox == WindowWidthTextBox) slider = WindowWidthSlider;
+            else if (textBox == WindowHeightTextBox) slider = WindowHeightSlider;
+
+            if (slider != null && int.TryParse(textBox.Text, out int value))
+            {
+                // Clamp to slider min/max bounds
+                value = Math.Max((int)slider.Minimum, Math.Min((int)slider.Maximum, value));
+
+                // Update slider (this will also reformat the textbox via Slider_ValueChanged)
+                slider.Value = value;
+                hasChanges = true;
+            }
+            else if (slider != null)
+            {
+                // Invalid input - revert to current slider value
+                textBox.Text = Math.Round(slider.Value).ToString("F0", CultureInfo.InvariantCulture);
+            }
+        }
+
         private void SettingsWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             // Check for Ctrl+S
