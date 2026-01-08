@@ -490,13 +490,16 @@ namespace FloatingClock
                 isTaskbarHidden
             ));
 
-            // Toggle system clock visibility
-            commands.Add(new CommandItem(
-                "Hide System Clock",
-                "C",
-                () => { ToggleSystemClockVisibility(); },
-                isSystemClockHidden
-            ));
+            // Toggle system clock visibility (Windows 11+ only, Windows 10 users can use System Settings)
+            if (IsWindows11OrNewer())
+            {
+                commands.Add(new CommandItem(
+                    "Hide System Clock",
+                    "C",
+                    () => { ToggleSystemClockVisibility(); },
+                    isSystemClockHidden
+                ));
+            }
 
             // Exit application
             commands.Add(new CommandItem(
@@ -533,7 +536,36 @@ namespace FloatingClock
         }
 
         /// <summary>
-        /// Toggles the Windows system clock visibility via registry
+        /// Checks if running on Windows 11 or newer (build 22000+)
+        /// </summary>
+        private bool IsWindows11OrNewer()
+        {
+            try
+            {
+                // Use registry to get actual build number (Environment.OSVersion can be unreliable without manifest)
+                using (var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion", false))
+                {
+                    if (key != null)
+                    {
+                        var buildStr = key.GetValue("CurrentBuild") as string ?? key.GetValue("CurrentBuildNumber") as string;
+                        if (int.TryParse(buildStr, out int build))
+                        {
+                            return build >= 22000;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to detect Windows version: {ex.Message}");
+            }
+
+            // Fallback to Environment.OSVersion
+            return Environment.OSVersion.Version.Build >= 22000;
+        }
+
+        /// <summary>
+        /// Toggles the Windows system clock visibility via registry (Windows 11+ only)
         /// </summary>
         private void ToggleSystemClockVisibility()
         {
@@ -591,10 +623,17 @@ namespace FloatingClock
         }
 
         /// <summary>
-        /// Reads the current system clock visibility state from registry
+        /// Reads the current system clock visibility state from registry (Windows 11+ only)
         /// </summary>
         private void InitializeSystemClockState()
         {
+            // Feature only available on Windows 11+
+            if (!IsWindows11OrNewer())
+            {
+                isSystemClockHidden = false;
+                return;
+            }
+
             try
             {
                 using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
@@ -700,9 +739,9 @@ namespace FloatingClock
                 // Toggle taskbar visibility
                 ToggleTaskbarVisibility();
             }
-            else if (e.Key == Key.C)
+            else if (e.Key == Key.C && IsWindows11OrNewer())
             {
-                // Toggle system clock visibility
+                // Toggle system clock visibility (Windows 11+ only)
                 ToggleSystemClockVisibility();
             }
             else if (e.Key == Key.D1 || e.Key == Key.NumPad1)
