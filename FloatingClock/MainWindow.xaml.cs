@@ -1138,8 +1138,14 @@ namespace FloatingClock
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 Point absoluteMousePosition = GetCursorPosition();
-                double left = absoluteMousePosition.X - relativeMousePosition.X;
-                double top = absoluteMousePosition.Y - relativeMousePosition.Y;
+
+                // Convert physical pixels to DIPs (GetCursorPos returns physical pixels, WPF uses DIPs)
+                monitorManager.GetDpiScale(this, out double dpiScaleX, out double dpiScaleY);
+                double mouseX = absoluteMousePosition.X / dpiScaleX;
+                double mouseY = absoluteMousePosition.Y / dpiScaleY;
+
+                double left = mouseX - relativeMousePosition.X;
+                double top = mouseY - relativeMousePosition.Y;
                 Left = left; Top = top;
             }
         }

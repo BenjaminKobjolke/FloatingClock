@@ -7,10 +7,45 @@ using System.Windows.Media;
 namespace FloatingClock.Managers
 {
     /// <summary>
+    /// Represents screen work area coordinates converted to WPF device-independent pixels
+    /// </summary>
+    public struct WorkAreaDips
+    {
+        public double Left { get; set; }
+        public double Top { get; set; }
+        public double Width { get; set; }
+        public double Height { get; set; }
+
+        public double Right => Left + Width;
+        public double Bottom => Top + Height;
+    }
+
+    /// <summary>
     /// Manages monitor detection, cycling, and DPI scaling
     /// </summary>
     public class MonitorManager
     {
+        /// <summary>
+        /// Gets the DPI scaling factors from a visual element (static utility method)
+        /// </summary>
+        /// <param name="visual">The visual element to get DPI scaling for</param>
+        /// <param name="dpiScaleX">Horizontal DPI scale where 1.0 = 100%, 1.25 = 125%, etc.</param>
+        /// <param name="dpiScaleY">Vertical DPI scale where 1.0 = 100%, 1.25 = 125%, etc.</param>
+        public static void GetDpiScaleFromVisual(Visual visual, out double dpiScaleX, out double dpiScaleY)
+        {
+            PresentationSource source = PresentationSource.FromVisual(visual);
+            if (source?.CompositionTarget != null)
+            {
+                dpiScaleX = source.CompositionTarget.TransformToDevice.M11;
+                dpiScaleY = source.CompositionTarget.TransformToDevice.M22;
+            }
+            else
+            {
+                dpiScaleX = 1.0;
+                dpiScaleY = 1.0;
+            }
+        }
+
         /// <summary>
         /// Gets the monitor that currently contains the specified window
         /// </summary>
@@ -31,17 +66,26 @@ namespace FloatingClock.Managers
         /// <param name="dpiScaleY">Vertical DPI scale where 1.0 = 100%, 1.25 = 125%, etc.</param>
         public void GetDpiScale(Window window, out double dpiScaleX, out double dpiScaleY)
         {
-            PresentationSource source = PresentationSource.FromVisual(window);
-            if (source?.CompositionTarget != null)
+            GetDpiScaleFromVisual(window, out dpiScaleX, out dpiScaleY);
+        }
+
+        /// <summary>
+        /// Gets the monitor's working area converted to WPF device-independent pixels
+        /// </summary>
+        /// <param name="monitor">The monitor to get work area from</param>
+        /// <param name="window">The window used to determine DPI scaling</param>
+        /// <returns>Work area coordinates in DIPs</returns>
+        public WorkAreaDips GetWorkAreaInDips(System.Windows.Forms.Screen monitor, Window window)
+        {
+            GetDpiScale(window, out double dpiScaleX, out double dpiScaleY);
+
+            return new WorkAreaDips
             {
-                dpiScaleX = source.CompositionTarget.TransformToDevice.M11;
-                dpiScaleY = source.CompositionTarget.TransformToDevice.M22;
-            }
-            else
-            {
-                dpiScaleX = 1.0; // Fallback to 100% scaling if source not available
-                dpiScaleY = 1.0;
-            }
+                Left = monitor.WorkingArea.X / dpiScaleX,
+                Top = monitor.WorkingArea.Y / dpiScaleY,
+                Width = monitor.WorkingArea.Width / dpiScaleX,
+                Height = monitor.WorkingArea.Height / dpiScaleY
+            };
         }
 
         /// <summary>

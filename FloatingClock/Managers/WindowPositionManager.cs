@@ -54,38 +54,31 @@ namespace FloatingClock.Managers
             if (monitor == null)
                 throw new ArgumentNullException(nameof(monitor));
 
-            // Get DPI scaling to convert from physical pixels to DIPs
-            double dpiScaleX, dpiScaleY;
-            monitorManager.GetDpiScale(window, out dpiScaleX, out dpiScaleY);
-
-            // Convert from physical pixels (Screen API) to device-independent pixels (WPF)
-            double workAreaLeft = monitor.WorkingArea.X / dpiScaleX;
-            double workAreaTop = monitor.WorkingArea.Y / dpiScaleY;
-            double workAreaWidth = monitor.WorkingArea.Width / dpiScaleX;
-            double workAreaHeight = monitor.WorkingArea.Height / dpiScaleY;
+            // Get work area in DIPs (already converted from physical pixels)
+            var workArea = monitorManager.GetWorkAreaInDips(monitor, window);
 
             WindowPosition position = new WindowPosition();
 
             switch (corner)
             {
                 case Corner.TopLeft:
-                    position.Left = workAreaLeft + 10;
-                    position.Top = workAreaTop + 10;
+                    position.Left = workArea.Left + 10;
+                    position.Top = workArea.Top + 10;
                     break;
 
                 case Corner.TopRight:
-                    position.Left = workAreaLeft + workAreaWidth - windowWidth - 10;
-                    position.Top = workAreaTop + 10;
+                    position.Left = workArea.Right - windowWidth - 10;
+                    position.Top = workArea.Top + 10;
                     break;
 
                 case Corner.BottomLeft:
-                    position.Left = workAreaLeft + 10;
-                    position.Top = workAreaTop + workAreaHeight - windowHeight - 20;
+                    position.Left = workArea.Left + 10;
+                    position.Top = workArea.Bottom - windowHeight - 20;
                     break;
 
                 case Corner.BottomRight:
-                    position.Left = workAreaLeft + workAreaWidth - windowWidth - 10;
-                    position.Top = workAreaTop + workAreaHeight - windowHeight - 20;
+                    position.Left = workArea.Right - windowWidth - 10;
+                    position.Top = workArea.Bottom - windowHeight - 20;
                     break;
             }
 
@@ -112,33 +105,21 @@ namespace FloatingClock.Managers
             if (monitor == null)
                 throw new ArgumentNullException(nameof(monitor));
 
-            // Get DPI scaling to convert from physical pixels to DIPs
-            double dpiScaleX, dpiScaleY;
-            monitorManager.GetDpiScale(window, out dpiScaleX, out dpiScaleY);
-
-            // Get current monitor's work area (respects taskbar)
-            // Convert from physical pixels (Screen API) to device-independent pixels (WPF)
-            double workAreaLeft = monitor.WorkingArea.X / dpiScaleX;
-            double workAreaTop = monitor.WorkingArea.Y / dpiScaleY;
-            double workAreaWidth = monitor.WorkingArea.Width / dpiScaleX;
-            double workAreaHeight = monitor.WorkingArea.Height / dpiScaleY;
+            // Get work area in DIPs (already converted from physical pixels)
+            var workArea = monitorManager.GetWorkAreaInDips(monitor, window);
 
             // Ensure window stays within work area
-            // Left edge: clamp to work area left
-            if (left < workAreaLeft)
-                left = workAreaLeft;
+            if (left < workArea.Left)
+                left = workArea.Left;
 
-            // Right edge: ensure window doesn't go off right side
-            if (left + windowWidth > workAreaLeft + workAreaWidth)
-                left = workAreaLeft + workAreaWidth - windowWidth;
+            if (left + windowWidth > workArea.Right)
+                left = workArea.Right - windowWidth;
 
-            // Top edge: clamp to work area top
-            if (top < workAreaTop)
-                top = workAreaTop;
+            if (top < workArea.Top)
+                top = workArea.Top;
 
-            // Bottom edge: ensure window doesn't go off bottom
-            if (top + windowHeight > workAreaTop + workAreaHeight)
-                top = workAreaTop + workAreaHeight - windowHeight;
+            if (top + windowHeight > workArea.Bottom)
+                top = workArea.Bottom - windowHeight;
         }
 
         /// <summary>

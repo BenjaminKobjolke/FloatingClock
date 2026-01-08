@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using FloatingClock.Managers;
 
 namespace FloatingClock
 {
@@ -181,42 +182,41 @@ namespace FloatingClock
             double desiredLeft = parentWindow.Left + (parentWindow.Width - this.ActualWidth) / 2;
             double desiredTop = parentWindow.Top + (parentWindow.Height - this.ActualHeight) / 2;
 
-            // Get current monitor
+            // Get current monitor and work area in DIPs
             var screen = System.Windows.Forms.Screen.FromHandle(new System.Windows.Interop.WindowInteropHelper(parentWindow).Handle);
+            MonitorManager.GetDpiScaleFromVisual(parentWindow, out double dpiScaleX, out double dpiScaleY);
+            var workArea = new WorkAreaDips
+            {
+                Left = screen.WorkingArea.X / dpiScaleX,
+                Top = screen.WorkingArea.Y / dpiScaleY,
+                Width = screen.WorkingArea.Width / dpiScaleX,
+                Height = screen.WorkingArea.Height / dpiScaleY
+            };
 
             // Validate and adjust position to ensure palette stays within screen bounds
-            ValidatePosition(ref desiredLeft, ref desiredTop, screen);
+            ValidatePosition(ref desiredLeft, ref desiredTop, workArea);
 
             this.Left = desiredLeft;
             this.Top = desiredTop;
         }
 
-        private void ValidatePosition(ref double left, ref double top, System.Windows.Forms.Screen screen)
+        private void ValidatePosition(ref double left, ref double top, WorkAreaDips workArea)
         {
-            double workAreaLeft = screen.WorkingArea.X;
-            double workAreaTop = screen.WorkingArea.Y;
-            double workAreaWidth = screen.WorkingArea.Width;
-            double workAreaHeight = screen.WorkingArea.Height;
-
             double windowWidth = this.ActualWidth;
             double windowHeight = this.ActualHeight;
 
             // Ensure window stays within work area
-            // Left edge
-            if (left < workAreaLeft)
-                left = workAreaLeft;
+            if (left < workArea.Left)
+                left = workArea.Left;
 
-            // Right edge
-            if (left + windowWidth > workAreaLeft + workAreaWidth)
-                left = workAreaLeft + workAreaWidth - windowWidth;
+            if (left + windowWidth > workArea.Right)
+                left = workArea.Right - windowWidth;
 
-            // Top edge
-            if (top < workAreaTop)
-                top = workAreaTop;
+            if (top < workArea.Top)
+                top = workArea.Top;
 
-            // Bottom edge
-            if (top + windowHeight > workAreaTop + workAreaHeight)
-                top = workAreaTop + workAreaHeight - windowHeight;
+            if (top + windowHeight > workArea.Bottom)
+                top = workArea.Bottom - windowHeight;
         }
 
         private void CommandPaletteWindow_KeyDown(object sender, KeyEventArgs e)

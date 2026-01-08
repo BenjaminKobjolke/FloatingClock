@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Interop;
 using System.Windows.Media; // For WPF Color
+using FloatingClock.Managers;
 using Color = System.Windows.Media.Color; // Explicitly use WPF Color
 
 namespace FloatingClock
@@ -86,13 +87,18 @@ namespace FloatingClock
 
         public static Bitmap CaptureScreenArea(Window window)
         {
-            int offset = 100; // Offset to capture outside the window
-            int x = Math.Max((int)window.Left - offset, 0);
-            int y = Math.Max((int)window.Top - offset, 0);
-            int width = (int)window.Width + (2 * offset);
-            int height = (int)window.Height + (2 * offset);
+            // Get DPI scaling factor (WPF uses DIPs, CopyFromScreen needs physical pixels)
+            MonitorManager.GetDpiScaleFromVisual(window, out double dpiScaleX, out double dpiScaleY);
 
-            // Adjusting capture area to be within the bounds of the screen
+            int offset = (int)(100 * dpiScaleX); // Offset in physical pixels
+
+            // Convert WPF DIPs to physical pixels
+            int x = Math.Max((int)(window.Left * dpiScaleX) - offset, 0);
+            int y = Math.Max((int)(window.Top * dpiScaleY) - offset, 0);
+            int width = (int)(window.Width * dpiScaleX) + (2 * offset);
+            int height = (int)(window.Height * dpiScaleY) + (2 * offset);
+
+            // Adjusting capture area to be within the bounds of the screen (already in physical pixels)
             System.Drawing.Rectangle screenBounds = Screen.FromHandle(new WindowInteropHelper(window).Handle).Bounds;
             width = Math.Min(width, screenBounds.Width - x);
             height = Math.Min(height, screenBounds.Height - y);
