@@ -184,7 +184,7 @@ namespace FloatingClock
                 int yWindow = Convert.ToInt32(iniData["window"]["y"]);
 
                 double desiredLeft = xWindow;
-                double desiredTop = SystemParameters.FullPrimaryScreenHeight - yWindow;
+                double desiredTop = yWindow;
 
                 // Validate and adjust position to ensure it's within screen bounds
                 positionManager.ValidateAndAdjustPosition(ref desiredLeft, ref desiredTop, this.Width, this.Height, currentMonitor, this);
