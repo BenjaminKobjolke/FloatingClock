@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Media;
 using IniParser;
 using IniParser.Model;
+using FloatingClock.Config;
 
 namespace FloatingClock.Managers
 {
@@ -13,7 +14,6 @@ namespace FloatingClock.Managers
     /// </summary>
     public class SettingsManager
     {
-        private const string SettingsFilePath = "settings.ini";
         private IniData iniData;
         private readonly FileIniDataParser parser;
 
@@ -33,12 +33,12 @@ namespace FloatingClock.Managers
         /// <returns>True if settings were loaded successfully</returns>
         public bool LoadSettings()
         {
-            if (!File.Exists(SettingsFilePath))
+            if (!File.Exists(Constants.GetSettingsFilePath()))
             {
                 try
                 {
                     iniData = CreateDefaultSettings();
-                    parser.WriteFile(SettingsFilePath, iniData);
+                    parser.WriteFile(Constants.GetSettingsFilePath(), iniData);
                     Debug.WriteLine("Created default settings.ini");
                     return true;
                 }
@@ -53,7 +53,7 @@ namespace FloatingClock.Managers
             {
                 try
                 {
-                    iniData = parser.ReadFile(SettingsFilePath);
+                    iniData = parser.ReadFile(Constants.GetSettingsFilePath());
                     return true;
                 }
                 catch (Exception ex)
@@ -82,7 +82,7 @@ namespace FloatingClock.Managers
                 iniData["window"]["fixed_corner"] = corner.ToString();
                 iniData["window"]["monitor"] = monitorDeviceName ?? "";
 
-                parser.WriteFile(SettingsFilePath, iniData);
+                parser.WriteFile(Constants.GetSettingsFilePath(), iniData);
             }
             catch (Exception ex)
             {
@@ -111,7 +111,7 @@ namespace FloatingClock.Managers
                 iniData["window"]["height"] = ((int)height).ToString();
                 iniData["window"]["fixed"] = isFixed ? "1" : "0";
 
-                parser.WriteFile(SettingsFilePath, iniData);
+                parser.WriteFile(Constants.GetSettingsFilePath(), iniData);
             }
             catch (Exception ex)
             {
@@ -161,7 +161,7 @@ namespace FloatingClock.Managers
                 }
 
                 iniData["theme"]["mode"] = mode;
-                parser.WriteFile(SettingsFilePath, iniData);
+                parser.WriteFile(Constants.GetSettingsFilePath(), iniData);
             }
             catch (Exception ex)
             {

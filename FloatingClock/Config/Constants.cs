@@ -1,3 +1,6 @@
+using System.IO;
+using System.Reflection;
+
 namespace FloatingClock.Config
 {
     /// <summary>
@@ -9,8 +12,17 @@ namespace FloatingClock.Config
         public const string AppName = "Floating Clock";
         public const string AppMutexName = "FloatingClockSingleInstance";
 
-        // Settings file
-        public const string SettingsFilePath = "settings.ini";
+        /// <summary>
+        /// Gets the settings file path based on the executable name.
+        /// If the exe is FloatingClock.exe, returns FloatingClock.ini in the same directory.
+        /// </summary>
+        public static string GetSettingsFilePath()
+        {
+            string exePath = Assembly.GetExecutingAssembly().Location;
+            string exeName = Path.GetFileNameWithoutExtension(exePath);
+            string exeDir = Path.GetDirectoryName(exePath);
+            return Path.Combine(exeDir, exeName + ".ini");
+        }
 
         // Log paths
         public const string DebugLogSubPath = "FloatingClock\\debug.log";

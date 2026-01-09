@@ -438,7 +438,7 @@ namespace FloatingClock
 
                 // Write to file
                 var parser = new FileIniDataParser();
-                parser.WriteFile("settings.ini", iniData);
+                parser.WriteFile(Constants.GetSettingsFilePath(), iniData);
             }
             catch (Exception ex)
             {

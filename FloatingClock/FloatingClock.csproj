@@ -128,7 +128,7 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Include="settings.ini">
+    <None Include="FloatingClock.ini">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <Resource Include="Resources\Fonts\IBMPlexMono-Regular.ttf" />
