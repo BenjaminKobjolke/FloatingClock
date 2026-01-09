@@ -213,8 +213,16 @@ namespace FloatingClock
             }
 
             string secondsColorValue = iniData["seconds"]["color"];
-            Color secondsColor = (Color)ColorConverter.ConvertFromString(secondsColorValue);
-            ClockBlockSeconds.Foreground = new SolidColorBrush(secondsColor);
+            try
+            {
+                Color secondsColor = (Color)ColorConverter.ConvertFromString(secondsColorValue);
+                ClockBlockSeconds.Foreground = new SolidColorBrush(secondsColor);
+            }
+            catch
+            {
+                // Use default color if parsing fails
+                ClockBlockSeconds.Foreground = new SolidColorBrush(Color.FromRgb(0x15, 0xfc, 0x11));
+            }
 
             int xTime = Convert.ToInt32(iniData["time"]["x"]);
             int yTime = Convert.ToInt32(iniData["time"]["y"]);
@@ -228,20 +236,16 @@ namespace FloatingClock
             timeFormat = iniData["time"]["format"];
 
             string timeColorValue = iniData["time"]["color"];
-            Color timeColor = (Color)ColorConverter.ConvertFromString(timeColorValue);
-            ClockBlock.Foreground = new SolidColorBrush(timeColor);
-
-            string timeVerticalAlignmentString = iniData["time"]["vertical_alignment"];
-            string timeHorizontalAlignmentString = iniData["time"]["horizontal_alignment"];
-            if (Enum.TryParse(timeVerticalAlignmentString, out VerticalAlignment timeVerticalAlignmentValue))
+            try
             {
-                ClockBlock.VerticalAlignment = timeVerticalAlignmentValue;
+                Color timeColor = (Color)ColorConverter.ConvertFromString(timeColorValue);
+                ClockBlock.Foreground = new SolidColorBrush(timeColor);
             }
-            if (Enum.TryParse(timeHorizontalAlignmentString, out HorizontalAlignment timeHorizontalAlignmentValue))
+            catch
             {
-                ClockBlock.HorizontalAlignment = timeHorizontalAlignmentValue;
+                // Use default color if parsing fails
+                ClockBlock.Foreground = new SolidColorBrush(Color.FromRgb(0x15, 0xfc, 0x11));
             }
-
 
             int xDate = Convert.ToInt32(iniData["date"]["x"]);
             int yDate = Convert.ToInt32(iniData["date"]["y"]);
@@ -265,8 +269,16 @@ namespace FloatingClock
             dateFormat = iniData["date"]["format"];
 
             string dateColorValue = iniData["date"]["color"];
-            Color dateColor = (Color)ColorConverter.ConvertFromString(dateColorValue);
-            DateBlock.Foreground = new SolidColorBrush(dateColor);
+            try
+            {
+                Color dateColor = (Color)ColorConverter.ConvertFromString(dateColorValue);
+                DateBlock.Foreground = new SolidColorBrush(dateColor);
+            }
+            catch
+            {
+                // Use default color if parsing fails
+                DateBlock.Foreground = new SolidColorBrush(Color.FromRgb(0x15, 0xfc, 0x11));
+            }
 
             string dateVerticalAlignmentString = iniData["date"]["vertical_alignment"];
             string  dateHorizontalAlignmentString = iniData["date"]["horizontal_alignment"];
@@ -280,8 +292,16 @@ namespace FloatingClock
             }
 
             string backgroundColorValue = iniData["background"]["color"];
-            Color backgroundColor = (Color)ColorConverter.ConvertFromString(backgroundColorValue);
-            FloatingClockWindow.Background = new SolidColorBrush(backgroundColor);
+            try
+            {
+                Color backgroundColor = (Color)ColorConverter.ConvertFromString(backgroundColorValue);
+                FloatingClockWindow.Background = new SolidColorBrush(backgroundColor);
+            }
+            catch
+            {
+                // Use default semi-transparent black if parsing fails
+                FloatingClockWindow.Background = new SolidColorBrush(Color.FromArgb(0x99, 0x00, 0x00, 0x00));
+            }
 
             string panelVerticalAlignmentString = iniData["stackpanel"]["vertical_alignment"];
             string panelHorizontalAlignmentString = iniData["stackpanel"]["horizontal_alignment"];
@@ -1128,11 +1148,19 @@ namespace FloatingClock
         }
 
         private void Background_Tick(object sender, EventArgs e)
-        {            
+        {
             string backgroundColorValue = iniData["background"]["color"];
-            Color backgroundColor = (Color)ColorConverter.ConvertFromString(backgroundColorValue);
-
-            bool success = ScreenCaptureHelper.AdjustBackgroundTransparency(this, backgroundColor);
+            try
+            {
+                Color backgroundColor = (Color)ColorConverter.ConvertFromString(backgroundColorValue);
+                ScreenCaptureHelper.AdjustBackgroundTransparency(this, backgroundColor);
+            }
+            catch
+            {
+                // Use default color if parsing fails
+                Color backgroundColor = Color.FromArgb(0x99, 0x00, 0x00, 0x00);
+                ScreenCaptureHelper.AdjustBackgroundTransparency(this, backgroundColor);
+            }
         }
 
         /// <summary>
