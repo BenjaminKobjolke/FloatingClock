@@ -85,16 +85,12 @@ namespace FloatingClock
                 TimeFormatTextBox.Text = iniData["time"]["format"];
                 TimeColorTextBox.Text = iniData["time"]["color"];
                 UpdateColorPreview(TimeColorTextBox, TimeColorPreview);
-                SetComboBoxByTag(TimeVerticalAlignmentComboBox, iniData["time"]["vertical_alignment"]);
-                SetComboBoxByTag(TimeHorizontalAlignmentComboBox, iniData["time"]["horizontal_alignment"]);
 
                 // Seconds section
                 SecondsShowCheckBox.IsChecked = iniData["seconds"]["show"] == "1";
                 SetSliderAndTextBox(SecondsSizeSlider, SecondsSizeTextBox, iniData["seconds"]["size"]);
                 SecondsColorTextBox.Text = iniData["seconds"]["color"];
                 UpdateColorPreview(SecondsColorTextBox, SecondsColorPreview);
-                SetComboBoxByTag(SecondsVerticalAlignmentComboBox, iniData["seconds"]["vertical_alignment"]);
-                SetComboBoxByTag(SecondsHorizontalAlignmentComboBox, iniData["seconds"]["horizontal_alignment"]);
 
                 // Stack panel section
                 SetComboBoxByTag(StackPanelVerticalAlignmentComboBox, iniData["stackpanel"]["vertical_alignment"]);
@@ -380,7 +376,7 @@ namespace FloatingClock
                 iniData["window"]["debug"] = WindowDebugCheckBox.IsChecked == true ? "1" : "0";
 
                 // Background section
-                iniData["background"]["color"] = BackgroundColorTextBox.Text;
+                iniData["background"]["color"] = NormalizeColor(BackgroundColorTextBox.Text);
                 iniData["background"]["auto_brightness_adjustment"] = BackgroundAutoBrightnessCheckBox.IsChecked == true ? "1" : "0";
                 iniData["background"]["threshold_change"] = BackgroundThresholdChangeTextBox.Text;
                 iniData["background"]["threshold_min"] = BackgroundThresholdMinTextBox.Text;
@@ -393,23 +389,19 @@ namespace FloatingClock
                 iniData["date"]["show"] = DateShowCheckBox.IsChecked == true ? "1" : "0";
                 iniData["date"]["size"] = Math.Round(DateSizeSlider.Value).ToString("F0", CultureInfo.InvariantCulture);
                 iniData["date"]["format"] = DateFormatTextBox.Text;
-                iniData["date"]["color"] = DateColorTextBox.Text;
+                iniData["date"]["color"] = NormalizeColor(DateColorTextBox.Text);
                 iniData["date"]["vertical_alignment"] = GetComboBoxTag(DateVerticalAlignmentComboBox);
                 iniData["date"]["horizontal_alignment"] = GetComboBoxTag(DateHorizontalAlignmentComboBox);
 
                 // Time section
                 iniData["time"]["size"] = Math.Round(TimeSizeSlider.Value).ToString("F0", CultureInfo.InvariantCulture);
                 iniData["time"]["format"] = TimeFormatTextBox.Text;
-                iniData["time"]["color"] = TimeColorTextBox.Text;
-                iniData["time"]["vertical_alignment"] = GetComboBoxTag(TimeVerticalAlignmentComboBox);
-                iniData["time"]["horizontal_alignment"] = GetComboBoxTag(TimeHorizontalAlignmentComboBox);
+                iniData["time"]["color"] = NormalizeColor(TimeColorTextBox.Text);
 
                 // Seconds section
                 iniData["seconds"]["show"] = SecondsShowCheckBox.IsChecked == true ? "1" : "0";
                 iniData["seconds"]["size"] = Math.Round(SecondsSizeSlider.Value).ToString("F0", CultureInfo.InvariantCulture);
-                iniData["seconds"]["color"] = SecondsColorTextBox.Text;
-                iniData["seconds"]["vertical_alignment"] = GetComboBoxTag(SecondsVerticalAlignmentComboBox);
-                iniData["seconds"]["horizontal_alignment"] = GetComboBoxTag(SecondsHorizontalAlignmentComboBox);
+                iniData["seconds"]["color"] = NormalizeColor(SecondsColorTextBox.Text);
 
                 // Stack panel section
                 iniData["stackpanel"]["vertical_alignment"] = GetComboBoxTag(StackPanelVerticalAlignmentComboBox);
@@ -421,9 +413,9 @@ namespace FloatingClock
                     iniData.Sections.AddSection("command_palette");
                 }
 
-                iniData["command_palette"]["background_color"] = PaletteBackgroundColorTextBox.Text;
-                iniData["command_palette"]["text_color"] = PaletteTextColorTextBox.Text;
-                iniData["command_palette"]["selected_background"] = PaletteSelectedBackgroundTextBox.Text;
+                iniData["command_palette"]["background_color"] = NormalizeColor(PaletteBackgroundColorTextBox.Text);
+                iniData["command_palette"]["text_color"] = NormalizeColor(PaletteTextColorTextBox.Text);
+                iniData["command_palette"]["selected_background"] = NormalizeColor(PaletteSelectedBackgroundTextBox.Text);
                 iniData["command_palette"]["font_family"] = PaletteFontFamilyComboBox.SelectedItem?.ToString() ?? "Consolas";
                 iniData["command_palette"]["font_size"] = Math.Round(PaletteFontSizeSlider.Value).ToString("F0", CultureInfo.InvariantCulture);
                 iniData["command_palette"]["width"] = Math.Round(PaletteWidthSlider.Value).ToString("F0", CultureInfo.InvariantCulture);
@@ -451,6 +443,17 @@ namespace FloatingClock
         {
             var selectedItem = comboBox.SelectedItem as ComboBoxItem;
             return selectedItem?.Tag?.ToString() ?? "";
+        }
+
+        /// <summary>
+        /// Normalizes a color string to ensure it has the # prefix
+        /// </summary>
+        private string NormalizeColor(string colorString)
+        {
+            if (string.IsNullOrEmpty(colorString))
+                return colorString;
+
+            return colorString.StartsWith("#") ? colorString : "#" + colorString;
         }
 
         private void RestartApplication()

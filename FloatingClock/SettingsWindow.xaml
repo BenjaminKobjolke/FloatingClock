@@ -247,20 +247,6 @@
                     <Rectangle x:Name="TimeColorPreview" Grid.Column="1" Margin="10,0,0,0" Stroke="Gray" StrokeThickness="1"/>
                 </Grid>
 
-                <TextBlock Text="Vertical Alignment:" Style="{StaticResource SettingLabel}"/>
-                <ComboBox x:Name="TimeVerticalAlignmentComboBox" Style="{StaticResource SettingControl}" Height="25" SelectionChanged="Setting_Changed">
-                    <ComboBoxItem Content="Top" Tag="Top"/>
-                    <ComboBoxItem Content="Center" Tag="Center"/>
-                    <ComboBoxItem Content="Bottom" Tag="Bottom"/>
-                </ComboBox>
-
-                <TextBlock Text="Horizontal Alignment:" Style="{StaticResource SettingLabel}"/>
-                <ComboBox x:Name="TimeHorizontalAlignmentComboBox" Style="{StaticResource SettingControl}" Height="25" SelectionChanged="Setting_Changed">
-                    <ComboBoxItem Content="Left" Tag="Left"/>
-                    <ComboBoxItem Content="Center" Tag="Center"/>
-                    <ComboBoxItem Content="Right" Tag="Right"/>
-                </ComboBox>
-
                 <!-- Seconds Section -->
                 <TextBlock Text="Seconds Display" Style="{StaticResource SectionHeader}"/>
                 <Separator Margin="0,0,0,10"/>
@@ -288,32 +274,18 @@
                     <Rectangle x:Name="SecondsColorPreview" Grid.Column="1" Margin="10,0,0,0" Stroke="Gray" StrokeThickness="1"/>
                 </Grid>
 
-                <TextBlock Text="Vertical Alignment:" Style="{StaticResource SettingLabel}"/>
-                <ComboBox x:Name="SecondsVerticalAlignmentComboBox" Style="{StaticResource SettingControl}" Height="25" SelectionChanged="Setting_Changed">
-                    <ComboBoxItem Content="Top" Tag="Top"/>
-                    <ComboBoxItem Content="Center" Tag="Center"/>
-                    <ComboBoxItem Content="Bottom" Tag="Bottom"/>
-                </ComboBox>
-
-                <TextBlock Text="Horizontal Alignment:" Style="{StaticResource SettingLabel}"/>
-                <ComboBox x:Name="SecondsHorizontalAlignmentComboBox" Style="{StaticResource SettingControl}" Height="25" SelectionChanged="Setting_Changed">
-                    <ComboBoxItem Content="Left" Tag="Left"/>
-                    <ComboBoxItem Content="Center" Tag="Center"/>
-                    <ComboBoxItem Content="Right" Tag="Right"/>
-                </ComboBox>
-
-                <!-- Stack Panel Section -->
-                <TextBlock Text="Layout" Style="{StaticResource SectionHeader}"/>
+                <!-- Clock Position Section -->
+                <TextBlock Text="Clock Position" Style="{StaticResource SectionHeader}"/>
                 <Separator Margin="0,0,0,10"/>
 
-                <TextBlock Text="Stack Panel Vertical Alignment:" Style="{StaticResource SettingLabel}"/>
+                <TextBlock Text="Vertical Position:" Style="{StaticResource SettingLabel}"/>
                 <ComboBox x:Name="StackPanelVerticalAlignmentComboBox" Style="{StaticResource SettingControl}" Height="25" SelectionChanged="Setting_Changed">
                     <ComboBoxItem Content="Top" Tag="Top"/>
                     <ComboBoxItem Content="Center" Tag="Center"/>
                     <ComboBoxItem Content="Bottom" Tag="Bottom"/>
                 </ComboBox>
 
-                <TextBlock Text="Stack Panel Horizontal Alignment:" Style="{StaticResource SettingLabel}"/>
+                <TextBlock Text="Horizontal Position:" Style="{StaticResource SettingLabel}"/>
                 <ComboBox x:Name="StackPanelHorizontalAlignmentComboBox" Style="{StaticResource SettingControl}" Height="25" SelectionChanged="Setting_Changed">
                     <ComboBoxItem Content="Left" Tag="Left"/>
                     <ComboBoxItem Content="Center" Tag="Center"/>
