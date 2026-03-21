@@ -170,6 +170,94 @@ namespace FloatingClock.Managers
         }
 
         /// <summary>
+        /// Loads the scale factor from the INI file
+        /// </summary>
+        public double LoadScaleFactor()
+        {
+            try
+            {
+                if (iniData != null && iniData["window"] != null)
+                {
+                    var value = iniData["window"]["scale"];
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        double scale = ConvertToDoubleWithCultureFallback(value);
+                        if (scale >= 0.5 && scale <= 3.0)
+                            return scale;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading scale factor: {ex.Message}");
+            }
+            return 1.0;
+        }
+
+        /// <summary>
+        /// Saves the scale factor to the INI file
+        /// </summary>
+        public void SaveScaleFactor(double factor)
+        {
+            try
+            {
+                if (iniData == null)
+                    return;
+
+                iniData["window"]["scale"] = factor.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                parser.WriteFile(Constants.GetSettingsFilePath(), iniData);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to save scale factor: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Loads the scale increment from the INI file
+        /// </summary>
+        public double LoadScaleIncrement()
+        {
+            try
+            {
+                if (iniData != null && iniData["window"] != null)
+                {
+                    var value = iniData["window"]["scale_increment"];
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        double increment = ConvertToDoubleWithCultureFallback(value);
+                        if (increment >= 0.01 && increment <= 5.0)
+                            return increment;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading scale increment: {ex.Message}");
+            }
+            return 0.5;
+        }
+
+        /// <summary>
+        /// Saves the scale increment to the INI file
+        /// </summary>
+        public void SaveScaleIncrement(double increment)
+        {
+            try
+            {
+                if (iniData == null)
+                    return;
+
+                iniData["window"]["scale_increment"] = increment.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                parser.WriteFile(Constants.GetSettingsFilePath(), iniData);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to save scale increment: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Helper method to convert a string value to double with culture fallback
         /// </summary>
         public double ConvertToDoubleWithCultureFallback(string value)
@@ -203,6 +291,8 @@ namespace FloatingClock.Managers
             defaults["window"]["fixed_corner"] = "4";
             defaults["window"]["debug"] = "0";
             defaults["window"]["monitor"] = "";
+            defaults["window"]["scale"] = "1.0";
+            defaults["window"]["scale_increment"] = "0.5";
 
             // Background section
             defaults["background"]["color"] = "#99000000";

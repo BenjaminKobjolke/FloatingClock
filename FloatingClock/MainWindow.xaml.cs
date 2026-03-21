@@ -69,6 +69,11 @@ namespace FloatingClock
 
         private bool skipSaveOnClose = false;
 
+        private double scaleFactor = 1.0;
+        private double scaleIncrement = 0.5;
+        private double baseWidth;
+        private double baseHeight;
+
         // Managers for separation of concerns
         private MonitorManager monitorManager;
         private SettingsManager settingsManager;
@@ -152,13 +157,22 @@ namespace FloatingClock
             int.TryParse(widthStr?.Trim(), out parsedWidth);
             int.TryParse(heightStr?.Trim(), out parsedHeight);
 
+            // Load scale factor
+            scaleFactor = settingsManager.LoadScaleFactor();
+            scaleIncrement = settingsManager.LoadScaleIncrement();
+
             if (parsedWidth > 0 && parsedHeight > 0)
             {
+                baseWidth = parsedWidth;
+                baseHeight = parsedHeight;
+
                 // Use Dispatcher with low priority to set size after all layout is complete
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    this.Width = parsedWidth;
-                    this.Height = parsedHeight;
+                    ContentScale.ScaleX = scaleFactor;
+                    ContentScale.ScaleY = scaleFactor;
+                    this.Width = baseWidth * scaleFactor;
+                    this.Height = baseHeight * scaleFactor;
                     // Re-adjust position after size change to fix corner docking
                     AdjustWindowPosition();
                 }), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
@@ -401,6 +415,43 @@ namespace FloatingClock
         }
 
         /// <summary>
+        /// Applies a new scale factor to the UI and persists it
+        /// </summary>
+        private void ApplyScale(double newScale)
+        {
+            newScale = Math.Max(0.5, Math.Min(3.0, newScale));
+            scaleFactor = newScale;
+            ContentScale.ScaleX = scaleFactor;
+            ContentScale.ScaleY = scaleFactor;
+            this.Width = baseWidth * scaleFactor;
+            this.Height = baseHeight * scaleFactor;
+            settingsManager.SaveScaleFactor(scaleFactor);
+
+            if (fixedPosition)
+            {
+                DockToCorner(currentCorner);
+            }
+        }
+
+        /// <summary>
+        /// Shows an input dialog to set a custom scale increment
+        /// </summary>
+        private void ShowScaleIncrementDialog()
+        {
+            var dialog = new InputDialog("Scale Increment", scaleIncrement.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            dialog.Owner = this;
+            if (dialog.ShowDialog() == true)
+            {
+                if (double.TryParse(dialog.InputValue, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double value)
+                    && value >= 0.01 && value <= 5.0)
+                {
+                    scaleIncrement = value;
+                    settingsManager.SaveScaleIncrement(scaleIncrement);
+                }
+            }
+        }
+
+        /// <summary>
         /// Handles right-click on the window to open the command palette
         /// </summary>
         private void Window_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
@@ -491,6 +542,30 @@ namespace FloatingClock
                 "Cycle to Next Corner",
                 "N",
                 () => { currentCorner = (Corner)(((int)currentCorner % 4) + 1); fixedPosition = true; DockToCorner(currentCorner); SaveCornerToSettings(); },
+                false
+            ));
+
+            // Scale Up
+            commands.Add(new CommandItem(
+                $"Scale Up (current: {scaleFactor:0.0#}x)",
+                "+",
+                () => { ApplyScale(scaleFactor + scaleIncrement); },
+                false
+            ));
+
+            // Scale Down
+            commands.Add(new CommandItem(
+                $"Scale Down (current: {scaleFactor:0.0#}x)",
+                "-",
+                () => { ApplyScale(scaleFactor - scaleIncrement); },
+                false
+            ));
+
+            // Set Scale Increment
+            commands.Add(new CommandItem(
+                $"Set Scale Increment (current: {scaleIncrement:0.0#})",
+                "I",
+                () => { ShowScaleIncrementDialog(); },
                 false
             ));
 
@@ -806,6 +881,16 @@ namespace FloatingClock
                 currentMonitor = monitorManager.GetCurrentMonitor(this);
                 DockToCorner(currentCorner);
                 SaveCornerToSettings();
+            }
+            else if (e.Key == Key.OemPlus || e.Key == Key.Add)
+            {
+                // Scale up
+                ApplyScale(scaleFactor + scaleIncrement);
+            }
+            else if (e.Key == Key.OemMinus || e.Key == Key.Subtract)
+            {
+                // Scale down
+                ApplyScale(scaleFactor - scaleIncrement);
             }
             else if (e.Key == Key.I)
             {

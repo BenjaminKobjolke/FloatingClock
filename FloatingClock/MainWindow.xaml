@@ -15,6 +15,9 @@
         Deactivated="Window_Deactivated">
    <Border x:Name="FocusBorder" BorderBrush="SkyBlue" BorderThickness="0">
      <Grid>
+      <Grid.LayoutTransform>
+        <ScaleTransform x:Name="ContentScale" ScaleX="1" ScaleY="1"/>
+      </Grid.LayoutTransform>
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*"/>
         <ColumnDefinition Width="Auto"/>
