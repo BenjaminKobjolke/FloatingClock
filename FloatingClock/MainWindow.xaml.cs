@@ -166,16 +166,11 @@ namespace FloatingClock
                 baseWidth = parsedWidth;
                 baseHeight = parsedHeight;
 
-                // Use Dispatcher with low priority to set size after all layout is complete
-                Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    ContentScale.ScaleX = scaleFactor;
-                    ContentScale.ScaleY = scaleFactor;
-                    this.Width = baseWidth * scaleFactor;
-                    this.Height = baseHeight * scaleFactor;
-                    // Re-adjust position after size change to fix corner docking
-                    AdjustWindowPosition();
-                }), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+                // Apply scale synchronously so position validation uses correct dimensions
+                ContentScale.ScaleX = scaleFactor;
+                ContentScale.ScaleY = scaleFactor;
+                this.Width = baseWidth * scaleFactor;
+                this.Height = baseHeight * scaleFactor;
             }
 
             // Load and validate monitor setting
@@ -785,7 +780,7 @@ namespace FloatingClock
             // Update current monitor before saving
             currentMonitor = monitorManager.GetCurrentMonitor(this);
 
-            settingsManager.SaveWindowState(this.Left, this.Top, this.Width, this.Height, fixedPosition);
+            settingsManager.SaveWindowState(this.Left, this.Top, baseWidth, baseHeight, fixedPosition);
             iniData = settingsManager.Data; // Keep local copy in sync
         }
 
