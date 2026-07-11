@@ -235,6 +235,12 @@ FakesAssemblies/
 # Visual Studio 6 workspace options file
 *.opt
 
+# Local build deploy settings (keep .example tracked)
+tools/build_debug_settings.bat
+
+# Local agent planning files
+claude-plans/
+
 # Visual Studio LightSwitch build output
 **/*.HTMLClient/GeneratedArtifacts
 **/*.DesktopClient/GeneratedArtifacts
