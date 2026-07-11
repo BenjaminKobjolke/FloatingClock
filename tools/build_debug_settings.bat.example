@@ -1,0 +1,4 @@
+@echo off
+REM Copy to build_debug_settings.bat and set your local deploy target.
+REM build_debug_settings.bat is git-ignored.
+set "TARGET_PATH=E:\[--Sync--]\BKTools\Apps\FloatingClock"

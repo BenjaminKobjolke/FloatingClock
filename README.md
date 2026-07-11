@@ -233,6 +233,19 @@ show_icons=1                     # 1=Show ✓ indicators, 0=Hide indicators
 
 The compiled executable and `settings.ini` will be in the `bin/Debug` or `bin/Release` folder.
 
+### Command-Line Build & Deploy
+
+`tools\build_debug.bat` builds the Debug configuration via MSBuild without opening Visual Studio.
+
+To also copy the build output to a deploy folder, create `tools\build_debug_settings.bat` (git-ignored, machine-local) with a `TARGET_PATH`:
+
+```bat
+@echo off
+set "TARGET_PATH=E:\path\to\deploy\FloatingClock"
+```
+
+When `TARGET_PATH` is set, `build_debug.bat` copies `FloatingClock\bin\Debug\*` to that folder after a successful build. Without the file, the copy step is skipped.
+
 ### Optional Font Enhancement
 
 The application uses **Consolas** by default (included with Windows). For an authentic LED clock look, you can optionally download and install:

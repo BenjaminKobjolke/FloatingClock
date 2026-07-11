@@ -9,6 +9,10 @@ echo.
 REM Change to solution directory
 cd /d "%~dp0.."
 
+REM Load optional local settings (e.g. TARGET_PATH for deploy copy)
+set "TARGET_PATH="
+if exist "%~dp0build_debug_settings.bat" call "%~dp0build_debug_settings.bat"
+
 REM Find MSBuild by checking common installation paths
 set "MSBUILD_PATH="
 
@@ -83,6 +87,20 @@ echo ========================================
 echo.
 echo Output: FloatingClock\bin\Debug\FloatingClock.exe
 echo.
+
+REM Optional: copy build output to deploy target
+if defined TARGET_PATH (
+    echo Copying to: %TARGET_PATH%
+    if not exist "%TARGET_PATH%" mkdir "%TARGET_PATH%"
+    xcopy /Y /E /I "FloatingClock\bin\Debug\*" "%TARGET_PATH%\"
+    if errorlevel 1 (
+        echo.
+        echo ERROR: Copy to target failed!
+        exit /b 1
+    )
+    echo Copy done.
+    echo.
+)
 
 REM Return to the tools directory
 cd /d "%~dp0"
