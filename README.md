@@ -53,6 +53,8 @@ Toggle between modes by pressing the **F** key.
 | **4** or **Numpad 4** | Dock to bottom-right corner |
 | **5** or **Numpad 5** | Cycle to next monitor (if multiple monitors available) |
 | **N** | Cycle through corners (1→2→3→4→1) |
+| **+** or **-** | Scale UI up / down by the scale increment |
+| **Alt + Up** / **Alt + Down** | Zoom in / out (same as **+** / **-**) |
 | **Arrow Keys** | Move window manually (switches to Free mode) |
 | **Shift + Arrow Keys** | Move window in smaller increments (10px instead of 100px) |
 

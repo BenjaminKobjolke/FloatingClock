@@ -1,4 +1,4 @@
-﻿using IniParser;
+using IniParser;
 using IniParser.Model;
 using Microsoft.Win32;
 using System;
@@ -797,12 +797,28 @@ namespace FloatingClock
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
+            // Alt combos arrive as Key.System with the real key in SystemKey.
+            Key key = (e.Key == Key.System) ? e.SystemKey : e.Key;
+            bool alt = Keyboard.Modifiers.HasFlag(ModifierKeys.Alt);
+
             int speed = Constants.KeyboardMoveSpeed;
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
             {
                 speed = Constants.KeyboardMoveSpeedSlow;
             }
-            if (e.Key == Key.S)
+            if (alt && key == Key.Up)
+            {
+                // Zoom in
+                ApplyScale(scaleFactor + scaleIncrement);
+                e.Handled = true;
+            }
+            else if (alt && key == Key.Down)
+            {
+                // Zoom out
+                ApplyScale(scaleFactor - scaleIncrement);
+                e.Handled = true;
+            }
+            else if (e.Key == Key.S)
             {
                 ClockBlockSeconds.Visibility = (ClockBlockSeconds.Visibility == Visibility.Collapsed) ? Visibility.Visible : Visibility.Collapsed;
             }
@@ -942,7 +958,7 @@ namespace FloatingClock
 
                 this.Left = newLeft;
             }
-            else if (e.Key == Key.Up)
+            else if (!alt && e.Key == Key.Up)
             {
                 fixedPosition = false;
                 double newLeft = this.Left;
@@ -954,7 +970,7 @@ namespace FloatingClock
 
                 this.Top = newTop;
             }
-            else if (e.Key == Key.Down)
+            else if (!alt && e.Key == Key.Down)
             {
                 fixedPosition = false;
                 double newLeft = this.Left;
