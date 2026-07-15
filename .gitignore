@@ -237,6 +237,7 @@ FakesAssemblies/
 
 # Local build deploy settings (keep .example tracked)
 tools/build_debug_settings.bat
+tools/publish_settings.ini
 
 # Local agent planning files
 claude-plans/
