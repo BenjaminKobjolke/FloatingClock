@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "build": 1,
+  "date": "2026-07-15",
+  "title": "Bản phát hành 2.0 đầu tiên",
+  "notes": [
+    "Đã thêm cửa sổ \"Có gì mới\" với ghi chú phát hành, có thể truy cập từ bảng lệnh",
+    "Hệ thống phát hành với ghi chú phát hành theo phiên bản, đã được dịch và được đóng gói kèm trong ứng dụng"
+  ]
+}

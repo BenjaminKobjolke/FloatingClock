@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "build": 1,
+  "date": "2026-07-15",
+  "title": "Lansarea inițială 2.0",
+  "notes": [
+    "Am adăugat fereastra „Ce este nou” cu notele de lansare, accesibilă din paleta de comenzi",
+    "Sistem de lansări cu note de lansare versionate și traduse, incluse în aplicație"
+  ]
+}

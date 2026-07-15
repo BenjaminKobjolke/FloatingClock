@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "build": 1,
+  "date": "2026-07-15",
+  "title": "Alkuperäinen 2.0-julkaisu",
+  "notes": [
+    "Lisätty Mikä uutta -ikkuna julkaisutiedoilla, johon pääsee komentopaletista",
+    "Julkaisujärjestelmä, jossa sovellukseen on paketoitu versionoidut, käännetyt julkaisutiedot"
+  ]
+}

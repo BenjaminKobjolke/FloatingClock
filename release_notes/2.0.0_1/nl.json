@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "build": 1,
+  "date": "2026-07-15",
+  "title": "Eerste 2.0-release",
+  "notes": [
+    "Nieuw venster 'Wat is er nieuw' toegevoegd met release-opmerkingen, toegankelijk via het opdrachtenpalet",
+    "Releasesysteem met versiegebonden, vertaalde release-opmerkingen die in de app zijn meegeleverd"
+  ]
+}

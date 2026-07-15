@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "build": 1,
+  "date": "2026-07-15",
+  "title": "Početno izdanje 2.0",
+  "notes": [
+    "Dodano je prozor Što je novo s napomenama o izdanju, dostupan putem palete naredbi",
+    "Sustav izdanja s verzioniranim, prevedenim napomenama o izdanju uključenima u aplikaciju"
+  ]
+}

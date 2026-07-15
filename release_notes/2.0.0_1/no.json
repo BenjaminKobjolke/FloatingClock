@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "build": 1,
+  "date": "2026-07-15",
+  "title": "Første 2.0-utgivelse",
+  "notes": [
+    "La til et «Hva er nytt»-vindu med utgivelsesnotater, tilgjengelig fra kommandopaletten",
+    "Utgivelsessystem med versjonerte, oversatte utgivelsesnotater pakket inn i appen"
+  ]
+}

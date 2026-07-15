@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "build": 1,
+  "date": "2026-07-15",
+  "title": "Pierwsze wydanie 2.0",
+  "notes": [
+    "Dodano okno „Co nowego” z informacjami o wydaniu, dostępne z poziomu palety poleceń",
+    "System wydań z wersjonowanymi, przetłumaczonymi informacjami o wydaniu dołączanymi do aplikacji"
+  ]
+}

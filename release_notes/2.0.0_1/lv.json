@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "build": 1,
+  "date": "2026-07-15",
+  "title": "Sākotnējais 2.0 izlaidums",
+  "notes": [
+    "Pievienots logs “Kas jauns” ar laidiena piezīmēm, pieejams no komandu paletes",
+    "Izlaišanas sistēma ar versionētām, tulkotām laidiena piezīmēm, kas iekļautas lietotnē"
+  ]
+}

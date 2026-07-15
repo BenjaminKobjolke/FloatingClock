@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "build": 1,
+  "date": "2026-07-15",
+  "title": "Kezdeti 2.0-s kiadás",
+  "notes": [
+    "Új \"Újdonságok\" ablak hozzáadva a kiadási megjegyzésekkel, amely elérhető a parancspalettáról",
+    "Kiadási rendszer verziózott, lefordított kiadási megjegyzésekkel, amelyek az alkalmazásba vannak csomagolva"
+  ]
+}

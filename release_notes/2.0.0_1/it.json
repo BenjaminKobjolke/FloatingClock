@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "build": 1,
+  "date": "2026-07-15",
+  "title": "Rilascio iniziale 2.0",
+  "notes": [
+    "Aggiunta la finestra \"Novità\" con le note di rilascio, accessibile dal menu comandi",
+    "Sistema di rilascio con note di rilascio versionate e tradotte incluse nell'app"
+  ]
+}

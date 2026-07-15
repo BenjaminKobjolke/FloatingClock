@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "build": 1,
+  "date": "2026-07-15",
+  "title": "Pradinis 2.0 leidimas",
+  "notes": [
+    "Pridėtas „Kas naujo“ langas su leidimo pastabomis, pasiekiamas iš komandų paletės",
+    "Leidimų sistema su versijuotomis, išverstomis leidimo pastabomis, įtrauktomis į programą"
+  ]
+}

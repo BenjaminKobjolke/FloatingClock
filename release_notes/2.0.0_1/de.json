@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "build": 1,
+  "date": "2026-07-15",
+  "title": "Erstveröffentlichung 2.0",
+  "notes": [
+    "Neues Fenster „Was ist neu“ mit Versionshinweisen hinzugefügt, erreichbar über die Befehlspalette",
+    "Veröffentlichungssystem mit versionierten, übersetzten Versionshinweisen, die in die App gebündelt sind"
+  ]
+}

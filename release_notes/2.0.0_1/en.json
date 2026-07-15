@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "build": 1,
+  "date": "2026-07-15",
+  "title": "Initial 2.0 release",
+  "notes": [
+    "Added What's New window with release notes, reachable from the command palette",
+    "Release system with versioned, translated release notes bundled into the app"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "build": 1,
+  "date": "2026-07-15",
+  "title": "İlk 2.0 sürümü",
+  "notes": [
+    "Komut paletinden erişilebilen sürüm notlarını içeren “Yenilikler” penceresi eklendi",
+    "Uygulamaya paketlenmiş, sürümlendirilmiş ve çevrilmiş sürüm notlarını içeren sürüm sistemi"
+  ]
+}

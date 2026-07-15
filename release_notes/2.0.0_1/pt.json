@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "build": 1,
+  "date": "2026-07-15",
+  "title": "Lançamento inicial 2.0",
+  "notes": [
+    "Adicionada a janela \"Novidades\" com notas de versão, acessível pela paleta de comandos",
+    "Sistema de lançamento com notas de versão traduzidas e versionadas, incluídas no aplicativo"
+  ]
+}

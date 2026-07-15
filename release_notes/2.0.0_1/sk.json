@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "build": 1,
+  "date": "2026-07-15",
+  "title": "Prvé vydanie 2.0",
+  "notes": [
+    "Pridané okno „Čo je nové“ s poznámkami k vydaniu, dostupné z príkazovej palety",
+    "Systém vydaní s verzionovanými, preloženými poznámkami k vydaniu, zahrnutými v aplikácii"
+  ]
+}
