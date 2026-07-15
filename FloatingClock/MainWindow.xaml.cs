@@ -591,6 +591,14 @@ namespace FloatingClock
                 ));
             }
 
+            // Show release notes
+            commands.Add(new CommandItem(
+                LocalizationManager.Lang("commands.whats_new"),
+                "W",
+                () => { ShowWhatsNewWindow(); },
+                false
+            ));
+
             // Exit application
             commands.Add(new CommandItem(
                 "Exit Application",
@@ -759,6 +767,16 @@ namespace FloatingClock
                 Debug.WriteLine($"Error opening settings window: {ex.Message}");
                 MessageBox.Show($"Error opening settings: {ex.Message}", "Settings Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        /// <summary>
+        /// Shows the What's New (release notes) window
+        /// </summary>
+        private void ShowWhatsNewWindow()
+        {
+            var whatsNewWindow = new WhatsNewWindow(ThemeHelper.IsDarkTheme(settingsManager.LoadThemeMode()));
+            whatsNewWindow.Owner = this;
+            whatsNewWindow.ShowDialog();
         }
 
         private void SaveCornerToSettings()

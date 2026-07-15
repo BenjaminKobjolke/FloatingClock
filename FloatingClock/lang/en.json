@@ -20,7 +20,14 @@
     "cycle_corner": "Cycle to Next Corner",
     "open_settings": "Open Settings",
     "hide_taskbar": "Hide Windows Taskbar",
+    "whats_new": "What's New",
     "exit": "Exit Application"
+  },
+  "release_notes": {
+    "title": "What's New",
+    "older": "Older",
+    "newer": "Newer",
+    "close": "Close"
   },
   "tray": {
     "show": "Show",
