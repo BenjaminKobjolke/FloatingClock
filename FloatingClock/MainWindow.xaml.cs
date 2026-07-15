@@ -70,7 +70,7 @@ namespace FloatingClock
         private bool skipSaveOnClose = false;
 
         private double scaleFactor = 1.0;
-        private double scaleIncrement = 0.5;
+        private double scaleIncrement = 0.1;
         private double baseWidth;
         private double baseHeight;
 

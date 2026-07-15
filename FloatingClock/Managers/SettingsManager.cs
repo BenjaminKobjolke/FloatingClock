@@ -235,7 +235,7 @@ namespace FloatingClock.Managers
             {
                 Debug.WriteLine($"Error loading scale increment: {ex.Message}");
             }
-            return 0.5;
+            return 0.1;
         }
 
         /// <summary>
